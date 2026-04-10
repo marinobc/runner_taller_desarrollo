@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { Check } from 'lucide-vue-next'
 
 const props = defineProps<{
   initialBackend?: string
@@ -95,9 +96,7 @@ const applyPaths = async () => {
         type="button"
         class="group relative inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold tracking-[0.1em] text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md hover:shadow-lg active:scale-95"
       >
-        <svg class="w-4 h-4 mr-2 -ml-1 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-        </svg>
+        <Check class="w-4 h-4 mr-2 -ml-1 transition-transform group-hover:rotate-12" />
         APPLY CHANGES
         <div class="absolute inset-0 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </button>

@@ -65,4 +65,4 @@ La aplicación estará disponible en:
 
 * **Backend**: Construido con Express.js. Gestiona la creación de procesos, el escaneo del sistema de archivos y la administración de puertos.
 * **Frontend**: Construido con Vue 3 (Composition API), TypeScript y Tailwind CSS.
-* **Íconos**: Utiliza sprites SVG ubicados en `frontend/public/icons.svg`.
+* **Íconos**: Implementados mediante la biblioteca **Lucide Vue Next** para garantizar consistencia y rendimiento.

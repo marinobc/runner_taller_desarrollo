@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useToast } from '../../composables/useToast'
 import StatusDot from '../common/StatusDot.vue'
 import ConflictModal from './ConflictModal.vue'
+import { Zap, Globe, TriangleAlert } from 'lucide-vue-next'
 
 const props = defineProps<{
   service: {
@@ -83,7 +84,7 @@ const bgClass = computed(() => props.service.running
             {{ service.type }}
           </span>
           <div v-if="service.port" class="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-md">
-            <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            <Zap class="w-3 h-3 text-blue-500" />
             <span class="text-[11px] font-mono font-black text-blue-600 dark:text-blue-400">:{{ service.port }}</span>
           </div>
         </div>
@@ -111,7 +112,7 @@ const bgClass = computed(() => props.service.running
             PID: {{ service.pid }}
           </div>
           <div v-if="service.port" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg border border-blue-700 shadow-sm text-[10px] font-black font-mono flex items-center gap-2">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.268 0 2.46.234 3.561.664M5.558 16.551a10.003 10.003 0 01-1.055-6.551m12.773 8.591A10.003 10.003 0 0115.38 12.01"></path></svg>
+            <Globe class="w-3 h-3" />
             PORT: {{ service.port }}
           </div>
         </div>
@@ -163,7 +164,7 @@ const bgClass = computed(() => props.service.running
     <!-- Conflict Warning (Footer) -->
     <div v-if="service.conflictingPid" class="bg-amber-50 dark:bg-amber-900/20 border-t border-amber-500/20 px-8 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3 text-amber-700 dark:text-amber-400 text-xs font-bold">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+        <TriangleAlert class="w-5 h-5" />
         <span>PORT CONFLICT: {{ service.port }} is blocked by PID <span class="underline decoration-2">{{ service.conflictingPid }}</span></span>
       </div>
       <button 

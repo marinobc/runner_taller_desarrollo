@@ -334,6 +334,11 @@ module.exports = function(configManager, processManager) {
         res.json({ logs: svc ? svc.logs : [] });
     });
 
+    router.post("/services/:id/clear-logs", (req, res) => {
+        processManager.broadcastServiceClear(req.params.id);
+        res.json({ ok: true });
+    });
+
     router.get("/stream/global", (req, res) => {
         res.setHeader("Content-Type", "text/event-stream");
         res.setHeader("Cache-Control", "no-cache");

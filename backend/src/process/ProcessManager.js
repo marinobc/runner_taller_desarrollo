@@ -23,9 +23,9 @@ class ProcessManager {
 
     getNpmCmd() { return this.isWindows() ? "npm.cmd" : "npm"; }
 
-    broadcastGlobal(msg, level = "INFO") {
+    broadcastGlobal(msg, level = "INFO", serviceId = null) {
         const ts = new Date().toLocaleTimeString("en-US", { hour12: false });
-        const payload = JSON.stringify({ ts, msg, level });
+        const payload = JSON.stringify({ ts, msg, level, serviceId });
         for (const res of this.globalClients) {
             res.write(`data: ${payload}\n\n`);
         }
@@ -48,8 +48,8 @@ class ProcessManager {
             res.write(`data: ${payload}\n\n`);
         }
         
-        // Broadcast to global console as well
-        this.broadcastGlobal(`[${svc.label}] ${cleanLine}`, "LOG");
+        // Broadcast to global console as well with serviceId for selective clearing
+        this.broadcastGlobal(`[${svc.label}] ${cleanLine}`, "LOG", serviceId);
     }
 
     setStatus(serviceId, running, pid = null) {
@@ -59,8 +59,9 @@ class ProcessManager {
         svc.pid = running && svc.process ? svc.process.pid : pid;
 
         this.broadcastGlobal(
-            running ? `▶  ${serviceId} started (PID ${svc.pid})` : `■  ${serviceId} stopped`,
-            running ? "START" : "STOP"
+            running ? `▶  ${svc.label} started (PID ${svc.pid})` : `■  ${svc.label} stopped`,
+            running ? "START" : "STOP",
+            serviceId
         );
 
         const statusPayload = JSON.stringify({ serviceId, running, pid: svc.pid });
@@ -82,10 +83,37 @@ class ProcessManager {
         }
     }
 
-    start(id, config, opts = {}) {
+    broadcastServiceClear(serviceId) {
+        const svc = this.services.get(serviceId);
+        if (!svc) return;
+        svc.logs = [];
+        
+        // Notify individual service clients
+        const payload = JSON.stringify({ clear: true });
+        for (const res of svc.sseClients) {
+            res.write(`data: ${payload}\n\n`);
+        }
+
+        // Notify global console for selective clearing
+        const globalPayload = JSON.stringify({ clear: true, serviceId });
+        for (const res of this.globalClients) {
+            res.write(`data: ${globalPayload}\n\n`);
+        }
+    }
+
+    async start(id, config, opts = {}) {
         logger.debug(`Attempting to start service: ${id}`, opts);
         const svc = this.services.get(id);
         if (!svc || svc.running) return;
+
+        // Pre-flight check: Port conflict
+        if (svc.port) {
+            const conflictingPid = await this.getPidOnPort(svc.port);
+            if (conflictingPid) {
+                this.broadcastGlobal(`⚠  Start failed: Port ${svc.port} is blocked by PID ${conflictingPid}`, "WARN", id);
+                return;
+            }
+        }
 
         const { cleanInstall = false, npmInstall = false } = opts;
         let cmd, args, cwd;
@@ -93,7 +121,7 @@ class ProcessManager {
         if (svc.type === "maven") {
             if (!config.backendRoot) return;
             cwd = path.join(config.backendRoot, id);
-            if (!fs.existsSync(cwd)) { this.broadcastGlobal(`⚠  Path not found: ${cwd}`, "WARN"); return; }
+            if (!fs.existsSync(cwd)) { this.broadcastGlobal(`⚠  Path not found: ${cwd}`, "WARN", id); return; }
 
             const mvn = this.getMavenCmd(cwd);
             args = cleanInstall ? ["clean", "install", "-DskipTests", "spring-boot:run"] : ["spring-boot:run"];
@@ -107,7 +135,7 @@ class ProcessManager {
         } else return;
 
         if (svc.type === "node" && npmInstall) {
-            this.broadcastGlobal(`📦 Running npm install for ${svc.label}…`, "INFO");
+            this.broadcastGlobal(`📦 Running npm install for ${svc.label}…`, "INFO", id);
             const installProc = spawn(this.getNpmCmd(), ["install"], { cwd, shell: this.isWindows(), stdio: ["ignore", "pipe", "pipe"] });
             installProc.stdout.on("data", d => {
                 const lines = d.toString().split(/\r?\n/);
@@ -119,12 +147,14 @@ class ProcessManager {
                 if (lines[lines.length - 1] === "") lines.pop();
                 lines.forEach(l => this.broadcastService(id, l));
             });
-            installProc.on("close", () => {
-                svc.logs = []; // Clear logs before launch after install
-                this.launch(svc, cmd, args, cwd)
+            installProc.on("close", (code) => {
+                if (code !== 0) {
+                    this.broadcastGlobal(`⚠  npm install failed (code ${code}). Aborting start.`, "WARN", id);
+                    return;
+                }
+                this.launch(svc, cmd, args, cwd);
             });
         } else {
-            svc.logs = []; // Clear logs before launch
             this.launch(svc, cmd, args, cwd);
         }
     }
@@ -133,6 +163,10 @@ class ProcessManager {
         logger.debug(`Launching process: ${cmd} ${args.join(' ')} (CWD: ${cwd})`);
         try {
             const proc = spawn(cmd, args, { cwd, shell: this.isWindows(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+            
+            // Only clear logs if spawn was successful
+            this.broadcastServiceClear(svc.id);
+            
             svc.process = proc;
             this.setStatus(svc.id, true);
 
@@ -148,19 +182,22 @@ class ProcessManager {
             });
 
             proc.on("close", (code) => {
-                this.broadcastGlobal(`${svc.running ? "■" : "✓"}  ${svc.label} exited (code ${code ?? "?"})`, svc.running ? "WARN" : "INFO");
+                this.broadcastGlobal(`${svc.running ? "■" : "✓"}  ${svc.label} exited (code ${code ?? "?"})`, svc.running ? "WARN" : "INFO", svc.id);
                 svc.process = null;
                 this.setStatus(svc.id, false);
             });
         } catch (e) {
-            this.broadcastGlobal(`⚠  Failed to start ${svc.label}: ${e.message}`, "WARN");
+            this.broadcastGlobal(`⚠  Failed to start ${svc.label}: ${e.message}`, "WARN", svc.id);
         }
     }
 
     stop(id) {
         const svc = this.services.get(id);
-        if (!svc || !svc.process) return;
-        this.killProcess(svc.process.pid);
+        if (!svc) return;
+        this.broadcastServiceClear(id); // Clear logs on stop
+        if (svc.process) {
+            this.killProcess(svc.process.pid);
+        }
         this.setStatus(id, false);
     }
 

@@ -40,6 +40,10 @@ const connectStream = () => {
   stream.onmessage = (e) => {
     try {
       const entry = JSON.parse(e.data)
+      if (entry.clear) {
+        logs.value = []
+        return
+      }
       logs.value.push(entry)
       scrollToBottom()
     } catch (err) {}
@@ -94,6 +98,19 @@ const copyLogs = async () => {
     showToast('Failed to copy text.', 'error')
   }
 }
+
+const clearLogs = async () => {
+  if (!props.service) return
+  try {
+    const res = await fetch(`/api/services/${props.service.id}/clear-logs`, { method: 'POST' })
+    if (res.ok) {
+      logs.value = []
+      showToast('Service logs cleared!', 'info')
+    }
+  } catch (e) {
+    showToast('Failed to clear logs', 'error')
+  }
+}
 </script>
 
 <template>
@@ -115,6 +132,9 @@ const copyLogs = async () => {
           <div class="flex items-center gap-2">
             <button @click="copyLogs" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">
               📋 Copy
+            </button>
+            <button @click="clearLogs" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">
+              🗑 Clear
             </button>
             <button @click="emit('close')" class="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors ml-2 bg-transparent">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>

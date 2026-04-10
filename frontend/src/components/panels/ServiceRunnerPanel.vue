@@ -17,9 +17,9 @@ const selectedLogService = ref<Service | null>(null)
 
 let stream: EventSource | null = null
 
-const log = (msg: string, level: string = 'INFO') => {
+const log = (msg: string, level: string = 'INFO', serviceId: string | null = null) => {
   const ts = new Date().toLocaleTimeString('en-US', { hour12: false })
-  logs.value.push({ ts, msg, level })
+  logs.value.push({ ts, msg, level, serviceId } as any)
   setTimeout(() => {
     if (consoleLogRef.value) {
       consoleLogRef.value.scrollTop = consoleLogRef.value.scrollHeight
@@ -35,8 +35,6 @@ const globalNpmInstall = ref(false)
 const globalMvnClean = ref(false)
 
 const startService = async (id: string, opts: any = {}) => {
-  // If no specific opts provided, use global toggles based on service type? 
-  // Actually, usually individual toggles in cards take precedence.
   await fetch(`/api/services/${id}/start`, { 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -86,7 +84,11 @@ const toggleStream = () => {
   stream.onmessage = (e) => {
     const data = JSON.parse(e.data)
     if (data.level === 'SYSTEM') return // skip internal system messages
-    log(data.msg, data.level)
+    if (data.clear && data.serviceId) {
+      logs.value = logs.value.filter((l: any) => l.serviceId !== data.serviceId)
+      return
+    }
+    log(data.msg, data.level, data.serviceId)
   }
 }
 

@@ -1,0 +1,17 @@
+{
+  "name": "proyecto-taller-toolkit-backend",
+  "version": "1.0.0",
+  "description": "Unified Service Launcher & Concat Tool - Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "cors": "^2.8.6",
+    "express": "^4.18.2",
+    "glob": "^10.3.10",
+    "js-tiktoken": "^1.0.21"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "backendRoot": "/path/to/your/backend",
+  "frontendRoot": "/path/to/your/frontend",
+  "port": 3333,
+  "debugMode": false,
+  "concat": {
+    "ignoreBinaries": true,
+    "ignoreHiddenDirs": true,
+    "ignoreLockfiles": true,
+    "skipDirsList": ".git\nnode_modules\ntarget\ndist\nbuild\ntest\n__pycache__\nvenv\n.venv\nenv\n.env",
+    "skipFilesList": ".gitignore\n.DS_Store",
+    "skipExtsList": ".png\n.jpg\n.exe\n.dll\n.zip\n.jpeg\n.gif\n.ico\n.pdf\n.pyc\n.pyo\n.pyd",
+    "customPatternsList": "*.min.js\n*.map\n*.md\nmvn*\n*.svg",
+    "includeContent": true,
+    "headerStyle": "compact"
+  }
+}

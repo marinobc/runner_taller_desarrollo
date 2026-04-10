@@ -1,0 +1,11 @@
+{
+  "name": "proyecto-taller-toolkit",
+  "version": "1.0.0",
+  "description": "Unified Service Launcher & Concat Tool",
+  "private": true,
+  "scripts": {
+    "start": "node scripts/launcher.js",
+    "dev": "node scripts/launcher.js"
+  },
+  "dependencies": {}
+}

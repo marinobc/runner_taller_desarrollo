@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getEncoding } = require('js-tiktoken');
+const Minifier = require('./Minifier');
 
 class TokenCacheService {
     constructor(cachePath) {
@@ -29,30 +30,32 @@ class TokenCacheService {
         }
     }
 
-    getCacheKey(rootPath, relativePath) {
-        // Use a combination of root and path to avoid collisions
-        return `${rootPath}:${relativePath}`;
+    getCacheKey(rootPath, relativePath, minify = false) {
+        return `${rootPath}:${relativePath}${minify ? ':min' : ''}`;
     }
 
-    getTokenCount(rootPath, relativePath) {
-        const key = this.getCacheKey(rootPath, relativePath);
+    getTokenCount(rootPath, relativePath, minify = false) {
+        const key = this.getCacheKey(rootPath, relativePath, minify);
         if (this.cache[key] !== undefined) {
             return this.cache[key];
         }
 
-        return this.updateTokenCount(rootPath, relativePath);
+        return this.updateTokenCount(rootPath, relativePath, minify);
     }
 
-    updateTokenCount(rootPath, relativePath) {
+    updateTokenCount(rootPath, relativePath, minify = false) {
         const fullPath = path.resolve(rootPath, relativePath);
         if (!fs.existsSync(fullPath) || fs.lstatSync(fullPath).isDirectory()) {
             return 0;
         }
 
         try {
-            const content = fs.readFileSync(fullPath, 'utf-8');
+            let content = fs.readFileSync(fullPath, 'utf-8');
+            if (minify) {
+                content = Minifier.minify(content, relativePath);
+            }
             const tokens = this.encoder.encode(content).length;
-            const key = this.getCacheKey(rootPath, relativePath);
+            const key = this.getCacheKey(rootPath, relativePath, minify);
             this.cache[key] = tokens;
             this.save();
             return tokens;

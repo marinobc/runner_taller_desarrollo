@@ -6,6 +6,7 @@ const { getEncoding } = require('js-tiktoken');
 const ServiceDiscovery = require('../services/ServiceDiscovery');
 const FileScanner = require('../scanner/FileScanner');
 const logger = require('../services/Logger');
+const Minifier = require('../services/Minifier');
 
 let fsWatcher = null;
 
@@ -78,7 +79,7 @@ module.exports = function(configManager, processManager, tokenService) {
                 const root = cfg.backendRoot && p.startsWith(cfg.backendRoot) ? cfg.backendRoot : (cfg.frontendRoot && p.startsWith(cfg.frontendRoot) ? cfg.frontendRoot : null);
                 if (root) {
                     const relativeP = path.relative(root, p);
-                    tokenService.updateTokenCount(root, relativeP);
+                    tokenService.updateTokenCount(root, relativeP, !!cConfig.minify);
                 }
             } else if (event === 'unlink') {
                 const root = cfg.backendRoot && p.startsWith(cfg.backendRoot) ? cfg.backendRoot : (cfg.frontendRoot && p.startsWith(cfg.frontendRoot) ? cfg.frontendRoot : null);
@@ -195,27 +196,37 @@ module.exports = function(configManager, processManager, tokenService) {
             const entries = await fs.promises.readdir(fullPath, { withFileTypes: true });
             const tree = [];
             const cConfig = configManager.get().concat;
-            const skipDirs = cConfig.skipDirsList.split('\n').map(s => s.trim()).filter(Boolean);
-            const skipFiles = cConfig.skipFilesList.split('\n').map(s => s.trim()).filter(Boolean);
-            const skipExts = cConfig.skipExtsList.split('\n').map(s => s.trim().toLowerCase()).filter(Boolean);
+            const skipDirs = (cConfig.skipDirsList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+            const skipFiles = (cConfig.skipFilesList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+            const skipExts = (cConfig.skipExtsList || "").split(/[\n,]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
             if (cConfig.ignoreLockfiles) skipFiles.push('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml');
+            const customPatterns = (cConfig.customPatternsList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+
+            const gitignoreInstance = cConfig.useGitignore ? FileScanner.loadGitignore(rootPath) : null;
             
             for (const entry of entries) {
-                const entryPath = path.join(relativePath, entry.name);
+                const entryRelativePath = path.join(relativePath, entry.name);
                 
+                // Check gitignore
+                if (gitignoreInstance && FileScanner.isIgnored(gitignoreInstance, entryRelativePath, entry.isDirectory())) {
+                    continue;
+                }
+
                 if (entry.isDirectory()) {
                     const isHiddenDir = cConfig.ignoreHiddenDirs && entry.name.startsWith('.');
-                    if (!skipDirs.includes(entry.name) && !isHiddenDir) {
-                        tree.push({ name: entry.name, path: entryPath, type: 'directory', children: [] });
+                    const matchesCustom = customPatterns.some(p => FileScanner.matchPattern(p, entryRelativePath, entry.name, true));
+                    if (!skipDirs.includes(entry.name) && !isHiddenDir && !matchesCustom) {
+                        tree.push({ name: entry.name, path: entryRelativePath, type: 'directory', children: [] });
                     }
                 } else if (entry.isFile()) {
                     const ext = path.extname(entry.name).toLowerCase();
                     const isHiddenFile = cConfig.ignoreHiddenDirs && entry.name.startsWith('.');
+                    const matchesCustom = customPatterns.some(p => FileScanner.matchPattern(p, entryRelativePath, entry.name, false));
                     
-                    if (!skipExts.includes(ext) && !skipFiles.includes(entry.name) && !isHiddenFile) {
+                    if (!skipExts.includes(ext) && !skipFiles.includes(entry.name) && !isHiddenFile && !matchesCustom) {
                         const stats = await fs.promises.stat(path.join(fullPath, entry.name));
-                        const tokens = tokenService.getTokenCount(rootPath, entryPath);
-                        tree.push({ name: entry.name, path: entryPath, type: 'file', size: stats.size, tokens });
+                        const tokens = tokenService.getTokenCount(rootPath, entryRelativePath, !!cConfig.minify);
+                        tree.push({ name: entry.name, path: entryRelativePath, type: 'file', size: stats.size, tokens });
                     }
                 }
             }
@@ -268,8 +279,11 @@ module.exports = function(configManager, processManager, tokenService) {
                 }
 
                 if (includeContent) {
-                    const content = fs.readFileSync(fullPath, 'utf-8');
-                    output += `${content}\n\n`;
+                    let content = fs.readFileSync(fullPath, 'utf-8');
+                    if (concatCfg.minify) {
+                        content = Minifier.minify(content, f.path);
+                    }
+                    output += `${content}${concatCfg.minify ? '\n' : '\n\n'}`;
                 }
             } catch(e) {
                 console.error(`Error reading ${f.path}`);

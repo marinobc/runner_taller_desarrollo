@@ -36,11 +36,55 @@ const calculatedTokens = ref<number | null>(null)
 
 const concatConfig = ref<any>(null)
 
+// State keys for persistence
+const STORAGE_PREFIX = 'concat_panel_'
+const EXPANDED_KEY = STORAGE_PREFIX + 'expanded_paths'
+const SELECTED_KEY = STORAGE_PREFIX + 'selected_paths'
+
+const getSavedExpanded = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem(EXPANDED_KEY)
+    return saved ? new Set(JSON.parse(saved)) : new Set(['backend', 'frontend'])
+  } catch { return new Set(['backend', 'frontend']) }
+}
+
+const getSavedSelected = (): Set<string> => {
+  try {
+    const saved = localStorage.getItem(SELECTED_KEY)
+    return saved ? new Set(JSON.parse(saved)) : new Set()
+  } catch { return new Set() }
+}
+
+const savePersistentState = () => {
+  const expandedPaths = new Set<string>()
+  const saveExp = (nodes: TreeNode[]) => {
+    for (const node of nodes) {
+      if (node.isDir && node.expanded) expandedPaths.add(node.path)
+      if (node.children) saveExp(node.children)
+    }
+  }
+  saveExp(treeRoot.value)
+  
+  const selectedPaths = new Set<string>()
+  for (const f of allFiles.value) {
+    if (f.selected) selectedPaths.add(f.root + '/' + f.path)
+  }
+
+  localStorage.setItem(EXPANDED_KEY, JSON.stringify([...expandedPaths]))
+  localStorage.setItem(SELECTED_KEY, JSON.stringify([...selectedPaths]))
+}
+
 onMounted(async () => {
   try {
     const res = await fetch('/api/concat-config')
     const data = await res.json()
-    if (data.concat) concatConfig.value = data.concat
+    if (data.concat) {
+      concatConfig.value = data.concat
+      // Auto-scan on mount if we have some config
+      if (props.config.backendRoot || props.config.frontendRoot) {
+        scanFolders()
+      }
+    }
   } catch (e) {
     console.error('Failed to load concat config', e)
   }
@@ -87,22 +131,9 @@ const scanFolders = async (e?: Event) => {
 
   scanStatus.value = isAutoUpdate ? 'Updating...' : 'Scanning...'
   
-  // Save state if auto update
-  const expandedPaths = new Set<string>()
-  const selectedPaths = new Set<string>()
-  if (isAutoUpdate && allFiles.value.length > 0) {
-    const saveState = (nodes: TreeNode[]) => {
-      for (const node of nodes) {
-        if (node.isDir && node.expanded) expandedPaths.add(node.path)
-        if (node.children) saveState(node.children)
-      }
-    }
-    saveState(treeRoot.value)
-    
-    for (const f of allFiles.value) {
-      if (f.selected) selectedPaths.add(f.root + '/' + f.path)
-    }
-  }
+  // Load persistent state
+  const expandedPaths = getSavedExpanded()
+  const selectedPaths = getSavedSelected()
 
   try {
     const res = await fetch('/api/scan-files', {
@@ -115,14 +146,15 @@ const scanFolders = async (e?: Event) => {
     
     allFiles.value = files.map((f: any) => {
       const fullPath = f.root + '/' + f.path
-      const isSelected = isAutoUpdate ? selectedPaths.has(fullPath) : true
+      // Default to saved state, or false if not in saved state
+      const isSelected = selectedPaths.has(fullPath)
       return { ...f, selected: isSelected }
     })
 
     // Build the tree
     const rootObj: Record<string, TreeNode> = {
-      backend: { name: 'Backend', isDir: true, path: 'backend', expanded: true, children: [], tokens: 0 },
-      frontend: { name: 'Frontend', isDir: true, path: 'frontend', expanded: true, children: [], tokens: 0 }
+      backend: { name: 'Backend', isDir: true, path: 'backend', expanded: expandedPaths.has('backend'), children: [], tokens: 0 },
+      frontend: { name: 'Frontend', isDir: true, path: 'frontend', expanded: expandedPaths.has('frontend'), children: [], tokens: 0 }
     }
     
     allFiles.value.forEach(file => {
@@ -141,7 +173,7 @@ const scanFolders = async (e?: Event) => {
             name: part,
             isDir: !isFile,
             path: nodePath,
-            expanded: isAutoUpdate ? expandedPaths.has(nodePath) : false,
+            expanded: expandedPaths.has(nodePath),
             children: [],
             tokens: 0,
             file: isFile ? file : undefined
@@ -151,6 +183,25 @@ const scanFolders = async (e?: Event) => {
         current = existing
       }
     })
+
+    const flattenTree = (nodes: TreeNode[]) => {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]
+        if (node.isDir) {
+          // If a directory has exactly 1 child AND it is a directory AND No files directly in it
+          if (node.children.length === 1 && node.children[0].isDir) {
+            const child = node.children[0]
+            node.name = node.name + '.' + child.name // Use dot notation for Java-style
+            node.path = child.path // Use the deeper path for state
+            node.children = child.children
+            node.expanded = expandedPaths.has(node.path) // Re-check expansion for new path
+            i-- // Re-check this node (might have another single-dir child)
+            continue
+          }
+          flattenTree(node.children)
+        }
+      }
+    }
 
     const sortDir = (node: TreeNode) => {
       node.children.sort((a: TreeNode, b: TreeNode) => {
@@ -171,11 +222,13 @@ const scanFolders = async (e?: Event) => {
 
     const treeResult: TreeNode[] = []
     if (rootObj.backend.children.length > 0) {
+      flattenTree(rootObj.backend.children)
       sortDir(rootObj.backend)
       aggregateTokens(rootObj.backend)
       treeResult.push(rootObj.backend)
     }
     if (rootObj.frontend.children.length > 0) {
+      flattenTree(rootObj.frontend.children)
       sortDir(rootObj.frontend)
       aggregateTokens(rootObj.frontend)
       treeResult.push(rootObj.frontend)
@@ -183,13 +236,47 @@ const scanFolders = async (e?: Event) => {
     
     treeRoot.value = treeResult
     scanStatus.value = `Ready (${allFiles.value.length} files)`
+    
+    // Save state after scan to ensure it's in sync
+    savePersistentState()
   } catch (err) {
+    console.error('Scan failed', err)
     scanStatus.value = 'Scan failed'
   }
 }
 
 const handleToggleDir = (node: TreeNode) => {
   node.expanded = !node.expanded
+  savePersistentState()
+}
+
+const selectBackendOnly = () => {
+  allFiles.value.forEach(f => f.selected = f.root === 'backend')
+  savePersistentState()
+}
+
+const selectFrontendOnly = () => {
+  allFiles.value.forEach(f => f.selected = f.root === 'frontend')
+  savePersistentState()
+}
+
+const toggleConfigOption = async (key: string) => {
+  if (!concatConfig.value) return
+  const newConfig = { ...concatConfig.value, [key]: !concatConfig.value[key] }
+  await saveConfig(newConfig)
+}
+
+const collapseAll = () => {
+  const collapse = (nodes: TreeNode[]) => {
+    for (const node of nodes) {
+      if (node.isDir) {
+        node.expanded = false
+        if (node.children) collapse(node.children)
+      }
+    }
+  }
+  collapse(treeRoot.value)
+  savePersistentState()
 }
 
 const handleToggleFile = (node: TreeNode) => {
@@ -215,11 +302,13 @@ const handleToggleFile = (node: TreeNode) => {
     }
     apply(node)
   }
+  savePersistentState()
 }
 
 const toggleAll = () => {
   const allSelected = allFiles.value.every(f => f.selected)
   allFiles.value.forEach(f => f.selected = !allSelected)
+  savePersistentState()
 }
 
 const selectedCount = computed(() => {
@@ -278,12 +367,35 @@ const clearOutput = () => {
       <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-bold">
         Project Structure
       </div>
+      
+      <!-- Quick Options -->
+      <div class="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex gap-2 flex-wrap bg-gray-50 dark:bg-gray-800/40">
+        <button 
+          @click="toggleConfigOption('minify')" 
+          :class="concatConfig?.minify ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-white text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'"
+          class="text-[10px] font-bold px-2 py-1 rounded border transition-colors flex items-center gap-1"
+        >
+          <span :class="concatConfig?.minify ? 'text-blue-500' : 'text-gray-400'">{{ concatConfig?.minify ? '●' : '○' }}</span> Minify
+        </button>
+        <button 
+          @click="toggleConfigOption('includeContent')" 
+          :class="concatConfig?.includeContent ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-white text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'"
+          class="text-[10px] font-bold px-2 py-1 rounded border transition-colors flex items-center gap-1"
+        >
+          <span :class="concatConfig?.includeContent ? 'text-blue-500' : 'text-gray-400'">{{ concatConfig?.includeContent ? '●' : '○' }}</span> Content
+        </button>
+        <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 my-auto mx-1"></div>
+        <button @click="selectBackendOnly" class="text-[10px] font-bold px-2 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-400 transition-colors">Only Back</button>
+        <button @click="selectFrontendOnly" class="text-[10px] font-bold px-2 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-400 transition-colors">Only Front</button>
+      </div>
+
       <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex gap-2 flex-wrap bg-gray-100/50 dark:bg-gray-800/80">
         <button @click="scanFolders" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">⟳ Scan</button>
         <button @click="showConfig = true" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">⚙️ Config</button>
         <button v-if="allFiles.length > 0" @click="toggleAll" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">
-          {{ selectedCount === allFiles.length ? 'Select None' : 'Select All' }}
+          {{ selectedCount === allFiles.length ? 'Select None' : 'All' }}
         </button>
+        <button v-if="allFiles.length > 0" @click="collapseAll" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">Collapse All</button>
       </div>
       
       <div class="flex-1 overflow-y-auto p-3 bg-white dark:bg-gray-900">

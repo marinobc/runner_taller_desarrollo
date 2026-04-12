@@ -14,6 +14,8 @@ class ConfigManager {
                 ignoreBinaries: true,
                 ignoreHiddenDirs: true,
                 ignoreLockfiles: true,
+                minify: false,
+                useGitignore: true,
                 skipDirsList: ".git\nnode_modules\ntarget\ndist\nbuild\ntest\n__pycache__\nvenv\n.venv\nenv\n.env",
                 skipFilesList: ".gitignore\n.DS_Store",
                 skipExtsList: ".png\n.jpg\n.exe\n.dll\n.zip\n.jpeg\n.gif\n.ico\n.pdf\n.pyc\n.pyo\n.pyd",

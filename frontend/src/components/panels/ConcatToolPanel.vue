@@ -12,6 +12,7 @@ interface FileItem {
   name: string
   path: string
   size: number
+  tokens: number
   root: string
   selected: boolean
 }
@@ -22,6 +23,7 @@ interface TreeNode {
   path: string
   expanded: boolean
   children: TreeNode[]
+  tokens: number
   file?: FileItem
 }
 
@@ -119,8 +121,8 @@ const scanFolders = async (e?: Event) => {
 
     // Build the tree
     const rootObj: Record<string, TreeNode> = {
-      backend: { name: 'Backend', isDir: true, path: 'backend', expanded: true, children: [] },
-      frontend: { name: 'Frontend', isDir: true, path: 'frontend', expanded: true, children: [] }
+      backend: { name: 'Backend', isDir: true, path: 'backend', expanded: true, children: [], tokens: 0 },
+      frontend: { name: 'Frontend', isDir: true, path: 'frontend', expanded: true, children: [], tokens: 0 }
     }
     
     allFiles.value.forEach(file => {
@@ -141,6 +143,7 @@ const scanFolders = async (e?: Event) => {
             path: nodePath,
             expanded: isAutoUpdate ? expandedPaths.has(nodePath) : false,
             children: [],
+            tokens: 0,
             file: isFile ? file : undefined
           }
           current.children.push(existing)
@@ -157,13 +160,24 @@ const scanFolders = async (e?: Event) => {
       node.children.forEach(sortDir)
     }
     
+    const aggregateTokens = (node: TreeNode): number => {
+      if (!node.isDir && node.file) {
+        node.tokens = node.file.tokens || 0
+      } else {
+        node.tokens = node.children.reduce((sum, child) => sum + aggregateTokens(child), 0)
+      }
+      return node.tokens
+    }
+
     const treeResult: TreeNode[] = []
     if (rootObj.backend.children.length > 0) {
       sortDir(rootObj.backend)
+      aggregateTokens(rootObj.backend)
       treeResult.push(rootObj.backend)
     }
     if (rootObj.frontend.children.length > 0) {
       sortDir(rootObj.frontend)
+      aggregateTokens(rootObj.frontend)
       treeResult.push(rootObj.frontend)
     }
     

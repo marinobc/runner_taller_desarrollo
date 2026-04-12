@@ -8,9 +8,8 @@ const FileScanner = require('../scanner/FileScanner');
 const logger = require('../services/Logger');
 
 let fsWatcher = null;
-const encoder = getEncoding('cl100k_base');
 
-module.exports = function(configManager, processManager) {
+module.exports = function(configManager, processManager, tokenService) {
     const router = express.Router();
 
     // Initialize logger from config
@@ -74,6 +73,21 @@ module.exports = function(configManager, processManager) {
 
         let debounceFs;
         fsWatcher.on('all', (event, p) => {
+            // Update token cache on changes
+            if (event === 'add' || event === 'change') {
+                const root = cfg.backendRoot && p.startsWith(cfg.backendRoot) ? cfg.backendRoot : (cfg.frontendRoot && p.startsWith(cfg.frontendRoot) ? cfg.frontendRoot : null);
+                if (root) {
+                    const relativeP = path.relative(root, p);
+                    tokenService.updateTokenCount(root, relativeP);
+                }
+            } else if (event === 'unlink') {
+                const root = cfg.backendRoot && p.startsWith(cfg.backendRoot) ? cfg.backendRoot : (cfg.frontendRoot && p.startsWith(cfg.frontendRoot) ? cfg.frontendRoot : null);
+                if (root) {
+                    const relativeP = path.relative(root, p);
+                    tokenService.deleteTokenCount(root, relativeP);
+                }
+            }
+
             clearTimeout(debounceFs);
             debounceFs = setTimeout(() => {
                 processManager.broadcastGlobal("FILESYSTEM_CHANGED", "SYSTEM");
@@ -155,14 +169,14 @@ module.exports = function(configManager, processManager) {
 
         if (paths.includes('backend') && cfg.backendRoot && fs.existsSync(cfg.backendRoot)) {
             try {
-                const files = await FileScanner.scanDirectory(cfg.backendRoot, null, cfg.concat);
+                const files = await FileScanner.scanDirectory(cfg.backendRoot, null, cfg.concat, tokenService);
                 files.forEach(f => allFiles.push({ ...f, root: 'backend' }));
             } catch (err) {}
         }
 
         if (paths.includes('frontend') && cfg.frontendRoot && fs.existsSync(cfg.frontendRoot)) {
             try {
-                const files = await FileScanner.scanDirectory(cfg.frontendRoot, null, cfg.concat);
+                const files = await FileScanner.scanDirectory(cfg.frontendRoot, null, cfg.concat, tokenService);
                 files.forEach(f => allFiles.push({ ...f, root: 'frontend' }));
             } catch (err) {}
         }
@@ -200,7 +214,8 @@ module.exports = function(configManager, processManager) {
                     
                     if (!skipExts.includes(ext) && !skipFiles.includes(entry.name) && !isHiddenFile) {
                         const stats = await fs.promises.stat(path.join(fullPath, entry.name));
-                        tree.push({ name: entry.name, path: entryPath, type: 'file', size: stats.size });
+                        const tokens = tokenService.getTokenCount(rootPath, entryPath);
+                        tree.push({ name: entry.name, path: entryPath, type: 'file', size: stats.size, tokens });
                     }
                 }
             }
@@ -261,12 +276,7 @@ module.exports = function(configManager, processManager) {
             }
         });
 
-        let tokens = 0;
-        try {
-            tokens = encoder.encode(output).length;
-        } catch (e) {
-            console.warn("Could not encode tokens:", e);
-        }
+        let tokens = tokenService.calculateTokens(output);
 
         res.json({ result: output, tokens });
     });

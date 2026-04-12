@@ -14,17 +14,20 @@ const cors = require("cors");
 const ConfigManager = require("./src/config/ConfigManager");
 const ProcessManager = require("./src/process/ProcessManager");
 const apiRoutes = require("./src/routes/api");
+const TokenCacheService = require("./src/services/TokenCacheService");
 
 const configPath = path.join(__dirname, '..', 'toolkit-config.json');
+const tokenCachePath = path.join(__dirname, '..', 'token-cache.json');
 const configManager = new ConfigManager(configPath);
 const processManager = new ProcessManager();
+const tokenCacheService = new TokenCacheService(tokenCachePath);
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Setup API routes
-app.use("/api", apiRoutes(configManager, processManager));
+app.use("/api", apiRoutes(configManager, processManager, tokenCacheService));
 
 const PORT = configManager.get().port || 3333;
 app.listen(PORT, () => {

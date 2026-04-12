@@ -92,8 +92,13 @@ const checkboxColor = computed(() => {
       <div class="w-4 text-center opacity-80">{{ getIcon() }}</div>
 
       <!-- Name -->
-      <div class="truncate transition-colors" :class="{ 'text-gray-500 dark:text-gray-400': checkState === 0, 'text-gray-900 dark:text-gray-100 font-medium': checkState !== 0 }">
+      <div class="truncate transition-colors flex-1" :class="{ 'text-gray-500 dark:text-gray-400': checkState === 0, 'text-gray-900 dark:text-white font-medium': checkState !== 0 }">
         {{ node.name }}
+      </div>
+
+      <!-- Token Badge -->
+      <div v-if="node.tokens !== undefined" class="ml-auto px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 group-hover:border-blue-300 dark:group-hover:border-blue-800 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all shadow-sm shrink-0 min-w-[30px] text-center">
+        {{ node.tokens > 999 ? (node.tokens / 1000).toFixed(1) + 'k' : node.tokens }}
       </div>
     </div>
 

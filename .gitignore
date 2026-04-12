@@ -51,3 +51,6 @@ out/
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Cache files
+token-cache.json

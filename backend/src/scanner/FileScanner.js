@@ -2,8 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 class FileScanner {
-    static async scanDirectory(rootPath, basePath = null, concatConfig = null) {
+    static async scanDirectory(rootPath, basePath = null, concatConfig = null, tokenService = null, actualRootPath = null) {
         const actualBase = basePath || rootPath;
+        const currentRoot = actualRootPath || actualBase;
         if (!rootPath || !fs.existsSync(rootPath)) return [];
         
         // Defaults if no config provided
@@ -18,9 +19,9 @@ class FileScanner {
             headerStyle: "compact"
         };
 
-        const skipDirs = cConfig.skipDirsList.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-        const skipFiles = cConfig.skipFilesList.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
-        const skipExts = cConfig.skipExtsList.split(/[\n,]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+        const skipDirs = (cConfig.skipDirsList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+        const skipFiles = (cConfig.skipFilesList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+        const skipExts = (cConfig.skipExtsList || "").split(/[\n,]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
         if (cConfig.ignoreLockfiles) skipFiles.push('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml');
         const customPatterns = (cConfig.customPatternsList || "").split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
 
@@ -37,7 +38,7 @@ class FileScanner {
                     const isHiddenDir = cConfig.ignoreHiddenDirs && entry.name.startsWith('.');
                     const matchesCustom = customPatterns.some(p => FileScanner.matchPattern(p, relativePath, entry.name, true));
                     if (!skipDirs.includes(entry.name) && !isHiddenDir && !matchesCustom) {
-                        const subFiles = await this.scanDirectory(fullPath, actualBase, cConfig);
+                        const subFiles = await this.scanDirectory(fullPath, actualBase, cConfig, tokenService, currentRoot);
                         files.push(...subFiles);
                     }
                 } else if (entry.isFile()) {
@@ -48,10 +49,12 @@ class FileScanner {
                     if (!skipExts.includes(ext) && !skipFiles.includes(entry.name) && !isHiddenFile && !matchesCustom) {
                         try {
                             const stats = await fs.promises.stat(fullPath);
+                            const tokens = tokenService ? tokenService.getTokenCount(currentRoot, relativePath) : 0;
                             files.push({
                                 name: entry.name,
                                 path: relativePath,
                                 size: stats.size,
+                                tokens,
                                 root: path.basename(actualBase)
                             });
                         } catch (err) {

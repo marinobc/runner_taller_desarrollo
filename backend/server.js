@@ -31,8 +31,8 @@ app.use("/api", apiRoutes(configManager, processManager, tokenCacheService));
 
 const PORT = configManager.get().port || 3333;
 app.listen(PORT, () => {
-    console.log(`\n  ╔═══════════════════════════════════════╗`);
-    console.log(`  ║  Proyecto Taller — Unified Toolkit   ║`);
-    console.log(`  ║  http://localhost:${PORT}               ║`);
-    console.log(`  ╚═══════════════════════════════════════╝\n`);
+    console.log(`\n  ──────────────────────────────────────────`);
+    console.log(`  PROYECTO TALLER — UNIFIED TOOLKIT`);
+    console.log(`  ➜ Local: http://localhost:${PORT}`);
+    console.log(`  ──────────────────────────────────────────\n`);
 });

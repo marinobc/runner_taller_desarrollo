@@ -125,8 +125,19 @@ class ProcessManager {
 
             const mvn = this.getMavenCmd(cwd);
             args = cleanInstall ? ["clean", "install", "-DskipTests", "spring-boot:run"] : ["spring-boot:run"];
-            cmd = this.isWindows() ? "cmd" : mvn;
-            if (this.isWindows()) args = ["/c", mvn, ...args];
+            
+            if (this.isWindows()) {
+                if (mvn.endsWith('.cmd')) {
+                    // It's the wrapper mvnw.cmd (absolute path). Quote it if it contains spaces.
+                    cmd = mvn.includes(' ') ? `"${mvn}"` : mvn;
+                } else {
+                    // It's the global "mvn" command
+                    cmd = "cmd";
+                    args = ["/c", mvn, ...args];
+                }
+            } else {
+                cmd = mvn;
+            }
         } else if (svc.type === "node") {
             if (!config.frontendRoot) return;
             cwd = config.frontendRoot;

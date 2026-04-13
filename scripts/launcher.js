@@ -45,22 +45,51 @@ process.on('SIGTERM', cleanup);
 
 // --- Helper to ensure dependencies exist ---
 const ensureDeps = (projectName, projectPath) => {
+    const pkgPath = path.join(projectPath, 'package.json');
+    const lockPath = path.join(projectPath, 'package-lock.json');
     const nodeModulesPath = path.join(projectPath, 'node_modules');
+    const markerPath = path.join(nodeModulesPath, '.last-install');
+    
+    let needsInstall = false;
+
     if (!fs.existsSync(nodeModulesPath)) {
-        log('SYSTEM', colors.system, `Installing dependencies for ${projectName}...`);
+        needsInstall = true;
+    } else if (fs.existsSync(pkgPath)) {
+        const pkgStat = fs.statSync(pkgPath);
+        const lockStat = fs.existsSync(lockPath) ? fs.statSync(lockPath) : null;
+        
+        if (!fs.existsSync(markerPath)) {
+            // No marker, but node_modules exists. Could be a fresh git pull or manual copy.
+            // Be safe and install.
+            needsInstall = true; 
+        } else {
+            const markerStat = fs.statSync(markerPath);
+            // If package.json or package-lock.json is newer than our last recorded install, we need an update
+            if (pkgStat.mtime > markerStat.mtime) needsInstall = true;
+            if (lockStat && lockStat.mtime > markerStat.mtime) needsInstall = true;
+        }
+    }
+
+    if (needsInstall) {
+        log('SYSTEM', colors.system, `Changes detected in ${projectName} dependencies. Updating...`);
         
         const npmCmd = isWindows ? 'npm.cmd' : 'npm';
-        const result = spawnSync(npmCmd, ['install'], { 
+        const result = spawnSync(`${npmCmd} install`, { 
             cwd: projectPath, 
             stdio: 'inherit', // Pipe output directly to console
-            shell: isWindows 
+            shell: true 
         });
 
         if (result.status !== 0) {
             log('ERROR', colors.error, `Failed to install dependencies for ${projectName}. Exiting.`);
             process.exit(1);
         }
-        log('SYSTEM', colors.system, `${projectName} dependencies installed.`);
+
+        // Create or update the marker inside node_modules
+        if (!fs.existsSync(nodeModulesPath)) fs.mkdirSync(nodeModulesPath, { recursive: true });
+        fs.writeFileSync(markerPath, new Date().toISOString());
+        
+        log('SYSTEM', colors.system, `${projectName} dependencies are now up to date.`);
     }
 };
 
@@ -78,7 +107,7 @@ const backend = spawn(
     { 
         cwd: backendCwd, 
         stdio: 'pipe', 
-        shell: isWindows,
+        shell: false, // Node is an exe, safe to run without shell
         detached: !isWindows 
     }
 );
@@ -97,12 +126,11 @@ const frontendCwd = path.join(rootDir, 'frontend');
 const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 
 const frontend = spawn(
-    npmCmd,
-    ['run', 'dev'],
+    `${npmCmd} run dev`,
     { 
         cwd: frontendCwd, 
         stdio: 'pipe', 
-        shell: isWindows,
+        shell: true, // npm.cmd requires shell
         detached: !isWindows 
     }
 );

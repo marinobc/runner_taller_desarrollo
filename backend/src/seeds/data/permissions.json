@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "perm_auth_login",
+    "resource": "auth",
+    "action": "login",
+    "scope": "ANY",
+    "description": "Login",
+    "active": true
+  },
+  {
+    "_id": "perm_users_create",
+    "resource": "users",
+    "action": "create",
+    "scope": "ANY",
+    "description": "Create users",
+    "active": true
+  },
+  {
+    "_id": "perm_props_create",
+    "resource": "properties",
+    "action": "create",
+    "scope": "ANY",
+    "description": "Create props",
+    "active": true
+  }
+]

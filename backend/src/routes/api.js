@@ -7,6 +7,7 @@ const ServiceDiscovery = require('../services/ServiceDiscovery');
 const FileScanner = require('../scanner/FileScanner');
 const logger = require('../services/Logger');
 const Minifier = require('../services/Minifier');
+const seedRoutes = require('./seed');
 
 let fsWatcher = null;
 
@@ -386,6 +387,9 @@ module.exports = function(configManager, processManager, tokenService) {
         svc.sseClients.add(res);
         req.on("close", () => svc.sseClients.delete(res));
     });
+
+    // Seed routes
+    router.use('/seeds', seedRoutes(configManager));
 
     return router;
 };

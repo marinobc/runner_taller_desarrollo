@@ -1,0 +1,41 @@
+[
+  {
+    "_id": "prop_venta_001",
+    "title": "Casa de Lujo Zona Sur",
+    "address": "Av. Principal 123",
+    "price": 250000.0,
+    "m2": 300.0,
+    "rooms": 4,
+    "type": "CASA",
+    "operationType": "VENTA",
+    "status": "DISPONIBLE",
+    "ownerId": "usr_test_owner_1",
+    "assignedAgentId": "usr_test_agent_1"
+  },
+  {
+    "_id": "prop_alq_002",
+    "title": "Apartamento Moderno Centro",
+    "address": "Calle Secundaria 45",
+    "price": 500.0,
+    "m2": 80.0,
+    "rooms": 2,
+    "type": "APARTAMENTO",
+    "operationType": "ALQUILER",
+    "status": "DISPONIBLE",
+    "ownerId": "usr_test_owner_2",
+    "assignedAgentId": "usr_test_agent_1"
+  },
+  {
+    "_id": "prop_anti_003",
+    "title": "Local Comercial Av. Principal",
+    "address": "Av. Principal 500",
+    "price": 30000.0,
+    "m2": 100.0,
+    "rooms": 1,
+    "type": "LOCAL",
+    "operationType": "ANTICRETICO",
+    "status": "DISPONIBLE",
+    "ownerId": "usr_test_owner_1",
+    "assignedAgentId": "usr_test_agent_2"
+  }
+]

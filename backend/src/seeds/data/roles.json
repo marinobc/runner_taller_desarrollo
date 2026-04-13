@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "rol_admin",
+    "code": "ADMIN",
+    "name": "Administrator",
+    "type": "SYSTEM",
+    "active": true,
+    "permissionsRef": "permissions",
+    "version": 1
+  },
+  {
+    "_id": "rol_agent",
+    "code": "AGENT",
+    "name": "Agent",
+    "type": "SYSTEM",
+    "active": true,
+    "permissionsRef": "permissions",
+    "version": 1
+  },
+  {
+    "_id": "rol_owner",
+    "code": "OWNER",
+    "name": "Owner",
+    "type": "SYSTEM",
+    "active": true,
+    "permissionsRef": [],
+    "version": 1
+  },
+  {
+    "_id": "rol_interested_client",
+    "code": "INTERESTED_CLIENT",
+    "name": "Client",
+    "type": "SYSTEM",
+    "active": true,
+    "permissionsRef": [],
+    "version": 1
+  }
+]

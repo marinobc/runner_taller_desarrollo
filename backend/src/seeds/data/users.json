@@ -1,0 +1,56 @@
+[
+  {
+    "_id": "usr_test_admin",
+    "firstName": "Admin",
+    "lastName": "System",
+    "email": "admin@admin.com",
+    "userType": "ADMIN",
+    "roleCode": "ADMIN",
+    "metadata": { "testing": true }
+  },
+  {
+    "_id": "usr_test_agent_1",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "agent1@user.com",
+    "userType": "EMPLOYEE",
+    "roleCode": "AGENT",
+    "metadata": { "testing": true }
+  },
+  {
+    "_id": "usr_test_agent_2",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "agent2@user.com",
+    "userType": "EMPLOYEE",
+    "roleCode": "AGENT",
+    "metadata": { "testing": true }
+  },
+  {
+    "_id": "usr_test_owner_1",
+    "firstName": "Mike",
+    "lastName": "Owner",
+    "email": "owner1@user.com",
+    "userType": "OWNER",
+    "roleCode": "OWNER",
+    "metadata": { "testing": true }
+  },
+  {
+    "_id": "usr_test_owner_2",
+    "firstName": "Sarah",
+    "lastName": "Connor",
+    "email": "owner2@user.com",
+    "userType": "OWNER",
+    "roleCode": "OWNER",
+    "metadata": { "testing": true }
+  },
+  {
+    "_id": "usr_test_client_1",
+    "firstName": "Boo",
+    "lastName": "Client",
+    "email": "client1@user.com",
+    "userType": "INTERESTED_CLIENT",
+    "roleCode": "INTERESTED_CLIENT",
+    "metadata": { "testing": true }
+  }
+]

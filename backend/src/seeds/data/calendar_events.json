@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "evt_001",
+    "propertyId": "prop_venta_001",
+    "propertyName": "Casa de Lujo Zona Sur",
+    "agentId": "usr_test_agent_1",
+    "agentName": "John Doe",
+    "type": "VISIT",
+    "status": "SCHEDULED",
+    "startOffsetDays": 1,
+    "startHour": 10,
+    "startMinute": 0,
+    "durationHours": 1
+  }
+]

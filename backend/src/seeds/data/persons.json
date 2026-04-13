@@ -1,0 +1,75 @@
+[
+  {
+    "authUserId": "usr_test_admin",
+    "firstName": "Admin",
+    "lastName": "System",
+    "email": "admin@admin.com",
+    "phone": "111",
+    "birthDate": "1990-01-01",
+    "personType": "ADMIN",
+    "roleCode": "ADMIN"
+  },
+  {
+    "authUserId": "usr_test_agent_1",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "agent1@user.com",
+    "phone": "222",
+    "birthDate": "1990-01-01",
+    "personType": "EMPLOYEE",
+    "roleCode": "AGENT",
+    "department": "Ventas",
+    "position": "Agent"
+  },
+  {
+    "authUserId": "usr_test_agent_2",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "agent2@user.com",
+    "phone": "333",
+    "birthDate": "1990-01-01",
+    "personType": "EMPLOYEE",
+    "roleCode": "AGENT",
+    "department": "Alquileres",
+    "position": "Agent"
+  },
+  {
+    "authUserId": "usr_test_owner_1",
+    "firstName": "Mike",
+    "lastName": "Owner",
+    "email": "owner1@user.com",
+    "phone": "444",
+    "birthDate": "1990-01-01",
+    "personType": "OWNER",
+    "roleCode": "OWNER",
+    "taxId": "NIT-111",
+    "address": "Address not specified"
+  },
+  {
+    "authUserId": "usr_test_owner_2",
+    "firstName": "Sarah",
+    "lastName": "Connor",
+    "email": "owner2@user.com",
+    "phone": "445",
+    "birthDate": "1990-01-01",
+    "personType": "OWNER",
+    "roleCode": "OWNER",
+    "taxId": "NIT-222",
+    "address": "Address not specified"
+  },
+  {
+    "authUserId": "usr_test_client_1",
+    "firstName": "Boo",
+    "lastName": "Client",
+    "email": "client1@user.com",
+    "phone": "555",
+    "birthDate": "1990-01-01",
+    "personType": "INTERESTED_CLIENT",
+    "roleCode": "INTERESTED_CLIENT",
+    "preferredContactMethod": "EMAIL",
+    "budget": "150000",
+    "preferredZone": "Any",
+    "preferredPropertyType": "CASA",
+    "preferredRooms": 3
+  }
+]

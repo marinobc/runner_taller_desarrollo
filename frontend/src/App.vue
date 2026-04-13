@@ -4,6 +4,7 @@ import Header from './components/layout/Header.vue'
 import PathsBar from './components/layout/PathsBar.vue'
 import ServiceRunnerPanel from './components/panels/ServiceRunnerPanel.vue'
 import ConcatToolPanel from './components/panels/ConcatToolPanel.vue'
+import SeedToolPanel from './components/panels/SeedToolPanel.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import { useToast } from './composables/useToast'
 import { logger } from './utils/logger'
@@ -107,11 +108,17 @@ onUnmounted(() => {
     >
       Service Runner
     </button>
-    <button 
-      @click="activeTab = 'concat'" 
+    <button
+      @click="activeTab = 'concat'"
       :class="['h-11 px-5 font-mono text-[12px] uppercase tracking-wider font-semibold border-b-2 transition-all duration-200 focus:outline-none', activeTab === 'concat' ? 'text-blue-600 border-blue-600 dark:text-blue-500 dark:border-blue-500' : 'text-gray-500 border-transparent hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300']"
     >
       Concat Tool
+    </button>
+    <button
+      @click="activeTab = 'seed'"
+      :class="['h-11 px-5 font-mono text-[12px] uppercase tracking-wider font-semibold border-b-2 transition-all duration-200 focus:outline-none', activeTab === 'seed' ? 'text-blue-600 border-blue-600 dark:text-blue-500 dark:border-blue-500' : 'text-gray-500 border-transparent hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300']"
+    >
+      MongoDB Seed
     </button>
   </div>
 
@@ -125,9 +132,15 @@ onUnmounted(() => {
       />
     </KeepAlive>
     <KeepAlive>
-      <ConcatToolPanel 
-        v-if="activeTab === 'concat'" 
-        :config="config" 
+      <ConcatToolPanel
+        v-if="activeTab === 'concat'"
+        :config="config"
+        class="flex-1 min-h-0"
+      />
+    </KeepAlive>
+    <KeepAlive>
+      <SeedToolPanel
+        v-if="activeTab === 'seed'"
         class="flex-1 min-h-0"
       />
     </KeepAlive>

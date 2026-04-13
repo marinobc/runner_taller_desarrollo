@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "req_001",
+    "propertyId": "prop_anti_003",
+    "propertyName": "Local Comercial Av. Principal",
+    "agentId": "usr_test_agent_2",
+    "agentName": "Jane Smith",
+    "clientId": "usr_test_client_1",
+    "clientName": "Boo Client",
+    "clientEmail": "client1@user",
+    "preferredOffsetDays": 2,
+    "preferredHour": 10,
+    "preferredMinute": 0
+  }
+]

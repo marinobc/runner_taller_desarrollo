@@ -10,6 +10,10 @@ class ConfigManager {
         const defaults = {
             backendRoot: "", frontendRoot: "", port: 3333,
             debugMode: false,
+            mongoUri: "mongodb://admin:admin@localhost:27017/inmobiliaria_db?authSource=admin",
+            mongoDbName: "inmobiliaria_db",
+            seedTestingPassword: "password",
+            bcryptRounds: 12,
             concat: {
                 ignoreBinaries: true,
                 ignoreHiddenDirs: true,

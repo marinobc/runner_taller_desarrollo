@@ -51,11 +51,12 @@ const applyPaths = async () => {
       <!-- Backend Path -->
       <div class="flex flex-col gap-1">
         <div class="flex items-stretch shadow-sm">
-          <span class="relative inline-flex items-center justify-center text-[10px] font-bold tracking-[0.15em] text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 min-w-[105px] uppercase">
-            <div class="w-1.5 h-[50%] absolute left-0 top-1/2 -translate-y-1/2 bg-orange-400 dark:bg-orange-500 rounded-r-sm"></div>
+          <label for="backend-path-input" class="relative inline-flex items-center justify-center text-[10px] font-bold tracking-[0.15em] text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 min-w-[105px] uppercase cursor-pointer">
+            <div class="w-1.5 h-[50%] absolute left-0 top-1/2 -translate-y-1/2 bg-orange-400 dark:bg-orange-500 rounded-r-sm" aria-hidden="true"></div>
             BACKEND
-          </span>
+          </label>
           <input 
+            id="backend-path-input"
             v-model="backendPath"
             type="text" 
             placeholder="Path to Backend root"
@@ -71,11 +72,12 @@ const applyPaths = async () => {
       <!-- Frontend Path -->
       <div class="flex flex-col gap-1">
         <div class="flex items-stretch shadow-sm">
-          <span class="relative inline-flex items-center justify-center text-[10px] font-bold tracking-[0.15em] text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 min-w-[105px] uppercase">
-            <div class="w-1.5 h-[50%] absolute left-0 top-1/2 -translate-y-1/2 bg-green-400 dark:bg-green-500 rounded-r-sm"></div>
+          <label for="frontend-path-input" class="relative inline-flex items-center justify-center text-[10px] font-bold tracking-[0.15em] text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 min-w-[105px] uppercase cursor-pointer">
+            <div class="w-1.5 h-[50%] absolute left-0 top-1/2 -translate-y-1/2 bg-green-400 dark:bg-green-500 rounded-r-sm" aria-hidden="true"></div>
             FRONTEND
-          </span>
+          </label>
           <input 
+            id="frontend-path-input"
             v-model="frontendPath"
             type="text" 
             placeholder="Path to Frontend root"
@@ -96,7 +98,7 @@ const applyPaths = async () => {
         type="button"
         class="group relative inline-flex items-center justify-center px-6 py-2.5 text-xs font-bold tracking-[0.1em] text-white transition-all duration-200 bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 shadow-md hover:shadow-lg active:scale-95"
       >
-        <Check class="w-4 h-4 mr-2 -ml-1 transition-transform group-hover:rotate-12" />
+        <Check class="w-4 h-4 mr-2 -ml-1 transition-transform group-hover:rotate-12" aria-hidden="true" />
         APPLY CHANGES
         <div class="absolute inset-0 rounded-lg bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
       </button>

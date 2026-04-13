@@ -20,7 +20,7 @@ const props = defineProps<{
   defaultClean?: boolean
 }>()
 
-const emit = defineEmits(['start', 'stop', 'view-logs'])
+const emit = defineEmits(['start', 'stop', 'view-logs', 'refresh'])
 const { showToast } = useToast()
 
 const runInstall = ref(false)
@@ -48,10 +48,8 @@ const killConflicting = async () => {
   try {
     const res = await fetch(`/api/ports/kill/${props.service.conflictingPid}`, { method: 'POST' })
     if (res.ok) {
-      showToast(`Process ${props.service.conflictingPid} killed!`, 'success')
       showConflictModal.value = false
-      emit('view-logs') // Wait, actually just refresh
-      // Parent will refresh state
+      emit('refresh')
     }
   } catch (e) {
     showToast('Failed to kill process', 'error')
@@ -68,13 +66,13 @@ const bgClass = computed(() => props.service.running
 <template>
   <div :class="['relative shrink-0 flex flex-col border rounded-2xl transition-all duration-300 shadow-sm overflow-hidden', bgClass]">
     <!-- Color Bar Accent (Top) -->
-    <div class="h-1 w-full opacity-60" :style="{ backgroundColor: service.color }"></div>
+    <div class="h-1 w-full opacity-60" :style="{ backgroundColor: service.color }" aria-hidden="true"></div>
 
     <div class="flex items-center gap-0 min-h-[90px]">
       <!-- 1. IDENTITY COLUMN -->
       <div class="w-72 shrink-0 px-6 flex flex-col justify-center border-r border-gray-100 dark:border-gray-700/50 self-stretch py-3">
         <div class="flex items-center gap-2 mb-1">
-          <StatusDot :active="!!service.running" />
+          <StatusDot :active="!!service.running" :aria-label="'Status: ' + (service.running ? 'Online' : 'Offline')" />
           <span class="text-[16px] font-black uppercase tracking-tight text-gray-900 dark:text-white truncate">
             {{ service.label }}
           </span>
@@ -84,7 +82,7 @@ const bgClass = computed(() => props.service.running
             {{ service.type }}
           </span>
           <div v-if="service.port" class="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-md">
-            <Zap class="w-3 h-3 text-blue-500" />
+            <Zap class="w-3 h-3 text-blue-500" aria-hidden="true" />
             <span class="text-[11px] font-mono font-black text-blue-600 dark:text-blue-400">:{{ service.port }}</span>
           </div>
         </div>
@@ -94,14 +92,14 @@ const bgClass = computed(() => props.service.running
       <div class="flex-1 px-8 flex flex-col justify-center gap-2 border-r border-gray-100 dark:border-gray-700/50 self-stretch py-3">
         <div v-if="!service.running" class="flex flex-wrap items-center gap-4">
           <label v-if="service.type === 'node'" class="inline-flex items-center cursor-pointer group">
-            <input type="checkbox" v-model="runInstall" class="sr-only peer">
-            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <input type="checkbox" v-model="runInstall" class="sr-only peer" :aria-label="'Run NPM install for ' + service.label">
+            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800" aria-hidden="true"></div>
             <span class="ms-3 text-[11px] font-bold text-gray-400 group-hover:text-blue-500 transition-colors uppercase tracking-widest">NPM INSTALL</span>
           </label>
 
           <label v-if="service.type === 'maven'" class="inline-flex items-center cursor-pointer group">
-            <input type="checkbox" v-model="runClean" class="sr-only peer">
-            <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <input type="checkbox" v-model="runClean" class="sr-only peer" :aria-label="'Run Maven clean for ' + service.label">
+            <div class="relative w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-orange-800" aria-hidden="true"></div>
             <span class="ms-3 text-[11px] font-bold text-gray-400 group-hover:text-amber-500 transition-colors uppercase tracking-widest">MVN CLEAN</span>
           </label>
         </div>
@@ -112,7 +110,7 @@ const bgClass = computed(() => props.service.running
             PID: {{ service.pid }}
           </div>
           <div v-if="service.port" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg border border-blue-700 shadow-sm text-[10px] font-black font-mono flex items-center gap-2">
-            <Globe class="w-3 h-3" />
+            <Globe class="w-3 h-3" aria-hidden="true" />
             PORT: {{ service.port }}
           </div>
         </div>
@@ -164,7 +162,7 @@ const bgClass = computed(() => props.service.running
     <!-- Conflict Warning (Footer) -->
     <div v-if="service.conflictingPid" class="bg-amber-50 dark:bg-amber-900/20 border-t border-amber-500/20 px-8 py-4 flex items-center justify-between">
       <div class="flex items-center gap-3 text-amber-700 dark:text-amber-400 text-xs font-bold">
-        <TriangleAlert class="w-5 h-5" />
+        <TriangleAlert class="w-5 h-5" aria-hidden="true" />
         <span>PORT CONFLICT: {{ service.port }} is blocked by PID <span class="underline decoration-2">{{ service.conflictingPid }}</span></span>
       </div>
       <button 

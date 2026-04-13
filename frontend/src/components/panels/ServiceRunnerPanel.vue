@@ -124,15 +124,17 @@ onUnmounted(() => {
         @click="startAll"
         type="button" 
         class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 transition-colors"
+        aria-label="Start all services"
       >
-        ▶ Start All
+        <span aria-hidden="true">▶</span> Start All
       </button>
       <button 
         @click="stopAll"
         type="button" 
         class="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-4 py-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 transition-colors"
+        aria-label="Stop all services"
       >
-        ■ Stop All
+        <span aria-hidden="true">■</span> Stop All
       </button>
 
       <button 
@@ -140,8 +142,9 @@ onUnmounted(() => {
         type="button" 
         class="focus:outline-none text-white bg-amber-500 hover:bg-amber-600 focus:ring-4 focus:ring-amber-300 font-medium rounded-lg text-xs px-4 py-2 dark:focus:ring-amber-900 transition-colors"
         title="Terminate all conflicting background processes"
+        aria-label="Nuke all conflicting processes"
       >
-        ☢ Nuke All
+        <span aria-hidden="true">☢</span> Nuke All
       </button>
 
       <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
@@ -205,6 +208,7 @@ onUnmounted(() => {
         @start="(opts) => startService(svc.id, opts)" 
         @stop="stopService(svc.id)" 
         @view-logs="selectedLogService = svc"
+        @refresh="emit('refresh')"
       />
     </div>
     
@@ -215,24 +219,31 @@ onUnmounted(() => {
         <div class="ml-auto flex gap-2">
           <button 
             @click="copyGlobalLogs"
-            class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1"
+            class="text-xs font-medium text-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1"
           >
             Copy
           </button>
           <button 
             @click="clearConsole"
-            class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1"
+            class="text-xs font-medium text-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1 transition-all"
           >
             Clear
           </button>
         </div>
       </div>
-      <div ref="consoleLogRef" class="flex-1 overflow-auto p-4 bg-gray-50/50 dark:bg-gray-900/30">
+      <div 
+        ref="consoleLogRef" 
+        class="flex-1 overflow-auto p-4 bg-gray-50/50 dark:bg-gray-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        role="log"
+        aria-live="polite"
+        aria-label="Global service logs"
+        tabindex="0"
+      >
         <div 
           v-for="(logItem, index) in logs" 
           :key="index" 
           class="terminal-log-line block text-[12px] whitespace-pre"
-        ><span class="text-gray-500/50 select-none">[{{ logItem.ts }}] </span><span :class="[
+        ><span class="text-gray-500/50 select-none" aria-hidden="true">[{{ logItem.ts }}] </span><span :class="[
             logItem.level === 'START' ? 'text-green-600 dark:text-green-400 font-bold' : '',
             logItem.level === 'STOP' ? 'text-red-600 dark:text-red-400 font-bold' : '',
             (logItem.level !== 'START' && logItem.level !== 'STOP') ? 'text-gray-600 dark:text-gray-300' : ''
@@ -244,6 +255,7 @@ onUnmounted(() => {
       :show="!!selectedLogService" 
       :service="selectedLogService" 
       @close="selectedLogService = null" 
+      @refresh="emit('refresh')"
     />
   </div>
 </template>

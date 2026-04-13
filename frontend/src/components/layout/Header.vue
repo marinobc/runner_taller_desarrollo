@@ -59,7 +59,7 @@ const toggleDebug = async () => {
 <template>
   <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-5 h-[52px] shrink-0 flex items-center shadow-sm">
     <div class="flex items-center gap-3">
-      <div class="text-green-500 dark:text-green-400 text-xl drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]">⬡</div>
+      <div class="text-green-500 dark:text-green-400 text-xl drop-shadow-[0_0_6px_rgba(34,197,94,0.6)]" aria-hidden="true">⬡</div>
       <span class="font-display text-[13px] tracking-[0.12em] text-gray-900 dark:text-white font-bold">PROYECTO TALLER</span>
     </div>
     
@@ -71,22 +71,21 @@ const toggleDebug = async () => {
           isDebug ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800 shadow-sm' : 'bg-gray-50 dark:bg-gray-800 text-gray-400 border-gray-200 dark:border-gray-700 opacity-60 hover:opacity-100']"
         title="Toggle Debug Mode"
       >
-        <Code class="w-3.5 h-3.5" />
+        <Code class="w-3.5 h-3.5" aria-hidden="true" />
         Debug {{ isDebug ? 'On' : 'Off' }}
       </button>
 
       <button 
         @click="cycleTheme" 
         type="button" 
-        class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 transition-colors flex items-center justify-center min-w-[38px]"
-        :title="'Current Theme: ' + theme.charAt(0).toUpperCase() + theme.slice(1)"
+        :aria-label="'Current Theme: ' + theme.charAt(0).toUpperCase() + theme.slice(1)"
       >
         <!-- Light Mode -->
-        <Sun v-if="theme === 'light'" class="w-4 h-4" />
+        <Sun v-if="theme === 'light'" class="w-4 h-4" aria-hidden="true" />
         <!-- Dark Mode -->
-        <Moon v-else-if="theme === 'dark'" class="w-4 h-4" />
+        <Moon v-else-if="theme === 'dark'" class="w-4 h-4" aria-hidden="true" />
         <!-- System Mode -->
-        <Monitor v-else class="w-4 h-4" />
+        <Monitor v-else class="w-4 h-4" aria-hidden="true" />
       </button>
 
       <div class="flex items-center gap-2">

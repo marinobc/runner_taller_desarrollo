@@ -374,15 +374,17 @@ const clearOutput = () => {
           @click="toggleConfigOption('minify')" 
           :class="concatConfig?.minify ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-white text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'"
           class="text-[10px] font-bold px-2 py-1 rounded border transition-colors flex items-center gap-1"
+          aria-label="Toggle minification"
         >
-          <span :class="concatConfig?.minify ? 'text-blue-500' : 'text-gray-400'">{{ concatConfig?.minify ? '●' : '○' }}</span> Minify
+          <span :class="concatConfig?.minify ? 'text-blue-500' : 'text-gray-400'" aria-hidden="true">{{ concatConfig?.minify ? '●' : '○' }}</span> Minify
         </button>
         <button 
           @click="toggleConfigOption('includeContent')" 
           :class="concatConfig?.includeContent ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' : 'bg-white text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'"
           class="text-[10px] font-bold px-2 py-1 rounded border transition-colors flex items-center gap-1"
+          aria-label="Toggle include file content"
         >
-          <span :class="concatConfig?.includeContent ? 'text-blue-500' : 'text-gray-400'">{{ concatConfig?.includeContent ? '●' : '○' }}</span> Content
+          <span :class="concatConfig?.includeContent ? 'text-blue-500' : 'text-gray-400'" aria-hidden="true">{{ concatConfig?.includeContent ? '●' : '○' }}</span> Content
         </button>
         <div class="w-px h-4 bg-gray-300 dark:bg-gray-700 my-auto mx-1"></div>
         <button @click="selectBackendOnly" class="text-[10px] font-bold px-2 py-1 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-gray-400 transition-colors">Only Back</button>
@@ -398,7 +400,7 @@ const clearOutput = () => {
         <button v-if="allFiles.length > 0" @click="collapseAll" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-3 py-1.5 transition-colors">Collapse All</button>
       </div>
       
-      <div class="flex-1 overflow-y-auto p-3 bg-white dark:bg-gray-900">
+      <div class="flex-1 overflow-y-auto p-3 bg-white dark:bg-gray-900" role="tree" aria-label="Project file tree">
         <div v-if="allFiles.length === 0" class="p-4 font-mono text-xs text-gray-500 dark:text-gray-400 text-center mt-10">
           Click "Scan" to populate.
         </div>
@@ -427,13 +429,14 @@ const clearOutput = () => {
         <div class="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1"></div>
         <span class="text-xs text-gray-500 dark:text-gray-400 font-medium">Selected: <span class="font-bold text-gray-900 dark:text-white">{{ selectedCount }} / {{ allFiles.length }}</span></span>
         <button @click="generateOutput" class="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-4 py-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 transition-colors shadow-sm ml-2">⚡ Generate</button>
-        <button @click="copyOutput" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-4 py-2 transition-colors">📋 Copy</button>
+        <button @click="copyOutput" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-4 py-2 transition-colors" aria-label="Copy output to clipboard">📋 Copy</button>
         <button @click="clearOutput" class="text-xs font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-red-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 px-4 py-2 transition-colors">✕ Clear</button>
       </div>
       <textarea 
         v-model="outputText"
         class="flex-1 w-full resize-none border-none bg-white text-gray-900 font-mono text-sm p-4 outline-none focus:ring-0 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500" 
         placeholder="Output will appear here..."
+        aria-label="Generated concatenated output"
       ></textarea>
     </div>
 

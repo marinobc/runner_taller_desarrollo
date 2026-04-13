@@ -66,10 +66,11 @@ const checkboxColor = computed(() => {
 </script>
 
 <template>
-  <div class="font-mono text-[11px] select-none">
-    <div 
-      class="flex items-center gap-1 px-1 py-[2px] rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group transition-colors"
+  <div class="font-mono text-[11px] select-none" role="treeitem" :aria-expanded="node.isDir ? node.expanded : undefined" :aria-selected="checkState !== 0">
+    <button 
+      class="w-full flex items-center gap-1 px-1 py-[2px] rounded hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group transition-colors text-left focus:outline-none focus:ring-1 focus:ring-blue-500"
       @click="toggleExpanded"
+      :aria-label="(node.isDir ? (node.expanded ? 'Collapse ' : 'Expand ') : '') + node.name"
     >
       <!-- Fold indicator for dirs -->
       <div 
@@ -79,17 +80,31 @@ const checkboxColor = computed(() => {
         {{ node.isDir ? (node.expanded ? '▼' : '▶') : '' }}
       </div>
 
-      <!-- Checkbox -->
+      <!-- Checkbox (Accessible) -->
       <div 
-        class="w-3.5 text-center text-[13px] hover:text-gray-900 dark:hover:text-white transition-colors"
+        class="w-3.5 flex items-center justify-center text-[13px] hover:text-gray-900 dark:hover:text-white transition-colors relative"
         :class="checkboxColor"
-        @click="toggleSelection"
       >
-        {{ checkboxSymbol }}
+        <input 
+          type="checkbox" 
+          :checked="checkState === 1" 
+          :indeterminate="checkState === 2"
+          @click.stop="toggleSelection"
+          class="sr-only"
+          :id="'check-' + node.path"
+          :aria-label="'Select ' + node.name"
+        >
+        <label 
+          :for="'check-' + node.path"
+          class="cursor-pointer select-none"
+          @click.stop
+        >
+          {{ checkboxSymbol }}
+        </label>
       </div>
 
       <!-- Icon -->
-      <div class="w-4 text-center opacity-80">{{ getIcon() }}</div>
+      <div class="w-4 text-center opacity-80" aria-hidden="true">{{ getIcon() }}</div>
 
       <!-- Name -->
       <div class="truncate transition-colors flex-1" :class="{ 'text-gray-500 dark:text-gray-400': checkState === 0, 'text-gray-900 dark:text-white font-medium': checkState !== 0 }">
@@ -100,10 +115,10 @@ const checkboxColor = computed(() => {
       <div v-if="node.tokens !== undefined" class="ml-auto px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 group-hover:border-blue-300 dark:group-hover:border-blue-800 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all shadow-sm shrink-0 min-w-[30px] text-center">
         {{ node.tokens > 999 ? (node.tokens / 1000).toFixed(1) + 'k' : node.tokens }}
       </div>
-    </div>
+    </button>
 
     <!-- Children -->
-    <div v-if="node.isDir && node.expanded" class="pl-3 border-l border-gray-200 dark:border-gray-700 ml-1.5 mt-[1px]">
+    <div v-if="node.isDir && node.expanded" class="pl-3 border-l border-gray-200 dark:border-gray-700 ml-1.5 mt-[1px]" role="group">
       <ConcatTreeNode 
         v-for="child in node.children" 
         :key="child.path"

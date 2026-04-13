@@ -8,6 +8,7 @@ const FileScanner = require('../scanner/FileScanner');
 const logger = require('../services/Logger');
 const Minifier = require('../services/Minifier');
 const seedRoutes = require('./seed');
+const dockerRoutes = require('./docker');
 
 let fsWatcher = null;
 
@@ -390,6 +391,9 @@ module.exports = function(configManager, processManager, tokenService) {
 
     // Seed routes
     router.use('/seeds', seedRoutes(configManager));
+
+    // Docker routes
+    router.use('/docker', dockerRoutes(configManager));
 
     return router;
 };

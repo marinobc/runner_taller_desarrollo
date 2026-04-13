@@ -14,6 +14,9 @@ class ConfigManager {
             mongoDbName: "inmobiliaria_db",
             seedTestingPassword: "password",
             bcryptRounds: 12,
+            docker: {
+                services: {}  // { mongodb: { ports: [{host: 27017}], env: [...] }, ... }
+            },
             concat: {
                 ignoreBinaries: true,
                 ignoreHiddenDirs: true,
@@ -38,6 +41,14 @@ class ConfigManager {
                     concat: {
                         ...defaults.concat,
                         ...(parsed.concat || {})
+                    },
+                    docker: {
+                        ...defaults.docker,
+                        ...(parsed.docker || {}),
+                        services: {
+                            ...defaults.docker.services,
+                            ...(parsed.docker?.services || {})
+                        }
                     }
                 };
             }

@@ -5,6 +5,7 @@ import PathsBar from './components/layout/PathsBar.vue'
 import ServiceRunnerPanel from './components/panels/ServiceRunnerPanel.vue'
 import ConcatToolPanel from './components/panels/ConcatToolPanel.vue'
 import SeedToolPanel from './components/panels/SeedToolPanel.vue'
+import DockerToolPanel from './components/panels/DockerToolPanel.vue'
 import ToastContainer from './components/common/ToastContainer.vue'
 import { useToast } from './composables/useToast'
 import { logger } from './utils/logger'
@@ -120,6 +121,12 @@ onUnmounted(() => {
     >
       MongoDB Seed
     </button>
+    <button
+      @click="activeTab = 'docker'"
+      :class="['h-11 px-5 font-mono text-[12px] uppercase tracking-wider font-semibold border-b-2 transition-all duration-200 focus:outline-none', activeTab === 'docker' ? 'text-blue-600 border-blue-600 dark:text-blue-500 dark:border-blue-500' : 'text-gray-500 border-transparent hover:text-gray-600 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300']"
+    >
+      Docker
+    </button>
   </div>
 
   <div class="flex-1 relative overflow-hidden flex flex-col">
@@ -141,6 +148,12 @@ onUnmounted(() => {
     <KeepAlive>
       <SeedToolPanel
         v-if="activeTab === 'seed'"
+        class="flex-1 min-h-0"
+      />
+    </KeepAlive>
+    <KeepAlive>
+      <DockerToolPanel
+        v-if="activeTab === 'docker'"
         class="flex-1 min-h-0"
       />
     </KeepAlive>

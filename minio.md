@@ -1,0 +1,2 @@
+CMD
+docker run -d --name buckets -p 9000:9000 -p 9001:9001 -v ~/minio-data:/data --user root -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin cgr.dev/chainguard/minio:latest server /data --console-address ":9001"

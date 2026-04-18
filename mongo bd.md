@@ -1,20 +1,43 @@
-```bash
-docker run --name TD_BD_Inmobiliaria -d -p 27017:27017 -e MONGO_INITDB_ROOT_USERNAME=admin -e MONGO_INITDB_ROOT_PASSWORD=admin -e MONGO_INITDB_DATABASE=inmobiliaria_db -v mongo_data:/data/db mongo:7.0
+# MongoDB — Multi-Database Instance
+
+```powershell
+# Start MongoDB (no MONGO_INITDB_DATABASE — databases are created on-demand)
+docker run --name TD_BD_Inmobiliaria -d -p 27017:27017 `
+  -v mongo_data:/data/db `
+  -e MONGO_INITDB_ROOT_USERNAME=admin `
+  -e MONGO_INITDB_ROOT_PASSWORD=admin `
+  mongo:7.0
 ```
 
-## Ejecutar en terminal
-Copia y pega este comando directamente en tu terminal (Git Bash, CMD, PowerShell o terminal de Linux/macOS).
+## Bases de datos gestionadas
 
-## Explicación del comando
+| Base de datos        | Servicio responsable     |
+|----------------------|--------------------------|
+| `identity_db`        | identity-service         |
+| `access_control_db`  | access-control-service   |
+| `notification_db`    | notification-service     |
+| `user_db`            | user-service             |
+| `property_db`        | property-service         |
+| `visit_calendar_db`  | visit-calendar-service   |
+
+## Pre-crear todas las DBs (opcional, PowerShell)
+
+```powershell
+$dbs = "identity_db","access_control_db","user_db","property_db","visit_calendar_db"
+$dbs | ForEach-Object {
+    docker exec TD_BD_Inmobiliaria mongosh -u admin -p admin --authenticationDatabase admin `
+        --eval "db.getSiblingDB('$_').createCollection('init')"
+}
+```
+
+## Parámetros
 
 | Parámetro | Descripción |
 |-----------|-------------|
-| **`docker run`** | Comando base para crear y ejecutar un nuevo contenedor |
-| **`--name TD_BD_Inmobiliaria`** | Asigna un nombre personalizado al contenedor. Facilita la referencia al contenedor en comandos futuros |
-| **`-d` (detach)** | Ejecuta el contenedor en segundo plano. Libera la terminal para otros comandos |
-| **`-p 27017:27017`** | **Formato:** `-p [puerto_host]:[puerto_contenedor]`<br>Mapea el puerto 27017 del host al puerto 27017 del contenedor<br>El puerto 27017 es el puerto por defecto de MongoDB |
-| **`-e MONGO_INITDB_ROOT_USERNAME=admin`** | Variable de entorno que establece el nombre de usuario administrador |
-| **`-e MONGO_INITDB_ROOT_PASSWORD=admin`** | Variable de entorno que establece la contraseña del administrador |
-| **`-e MONGO_INITDB_DATABASE=inmobiliaria_db`** | Variable de entorno que crea una base de datos inicial con ese nombre |
-| **`-v mongo_data:/data/db`** | Crea un volumen persistente llamado `mongo_data`<br>Lo monta en `/data/db` (directorio donde MongoDB guarda los datos)<br>Permite que los datos sobrevivan aunque el contenedor se elimine |
-| **`mongo:7.0`** | Especifica la imagen a utilizar. Versión 7.0 de MongoDB |
+| `--name TD_BD_Inmobiliaria` | Nombre del contenedor |
+| `-d` | Modo detached (segundo plano) |
+| `-p 27017:27017` | Puerto MongoDB por defecto |
+| `-e MONGO_INITDB_ROOT_USERNAME=admin` | Usuario administrador |
+| `-e MONGO_INITDB_ROOT_PASSWORD=admin` | Contraseña del administrador |
+| `-v mongo_data:/data/db` | Volumen persistente |
+| `mongo:7.0` | Imagen oficial MongoDB 7.0 |

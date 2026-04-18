@@ -13,11 +13,10 @@ const SERVICES = [
         volumes: ['mongo_data:/data/db'],
         env: [
             'MONGO_INITDB_ROOT_USERNAME=admin',
-            'MONGO_INITDB_ROOT_PASSWORD=admin',
-            'MONGO_INITDB_DATABASE=inmobiliaria_db'
+            'MONGO_INITDB_ROOT_PASSWORD=admin'
         ],
         icon: 'Database',
-        description: 'MongoDB 7.0 database with admin user and inmobiliaria_db',
+        description: 'MongoDB 7.0 — multi-db instance (identity_db, access_control_db, user_db, property_db, visit_calendar_db)',
         webUrl: null
     },
     {

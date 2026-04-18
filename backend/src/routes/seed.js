@@ -9,8 +9,7 @@ module.exports = function (configManager) {
     function getSeedConfig() {
         const cfg = configManager.get();
         return {
-            mongoUri: cfg.mongoUri || process.env.MONGO_URI || 'mongodb://admin:admin@localhost:27017/inmobiliaria_db?authSource=admin',
-            mongoDbName: cfg.mongoDbName || process.env.MONGO_DB_NAME || 'inmobiliaria_db',
+            mongoUri: cfg.mongoUri || process.env.MONGO_URI || 'mongodb://admin:admin@localhost:27017/?authSource=admin',
             testingPassword: cfg.seedTestingPassword || process.env.SEED_TESTING_PASSWORD || 'password',
             bcryptRounds: cfg.bcryptRounds || 12
         };
@@ -20,15 +19,14 @@ module.exports = function (configManager) {
         const cfg = configManager.get();
         res.json({
             mongoUri: cfg.mongoUri || '',
-            mongoDbName: cfg.mongoDbName || '',
             seedTestingPassword: cfg.seedTestingPassword || '',
             bcryptRounds: cfg.bcryptRounds || 12
         });
     });
 
     router.post('/config', (req, res) => {
-        const { mongoUri, mongoDbName, seedTestingPassword, bcryptRounds } = req.body;
-        configManager.save({ mongoUri, mongoDbName, seedTestingPassword, bcryptRounds: Number(bcryptRounds) || 12 });
+        const { mongoUri, seedTestingPassword, bcryptRounds } = req.body;
+        configManager.save({ mongoUri, seedTestingPassword, bcryptRounds: Number(bcryptRounds) || 12 });
         res.json({ ok: true, config: configManager.get() });
     });
 
@@ -61,11 +59,11 @@ module.exports = function (configManager) {
         }
 
         try {
-            const { nuke = true, collections = null } = req.body;
+            const { nuke = true } = req.body;
             const seedConfig = getSeedConfig();
             activeExecutor = new SeedExecutor(seedConfig);
 
-            const result = await activeExecutor.execute({ nuke, specificCollections: collections });
+            const result = await activeExecutor.execute({ nuke });
             await activeExecutor.disconnect();
             activeExecutor = null;
 
@@ -102,8 +100,19 @@ module.exports = function (configManager) {
     router.get('/collections', (req, res) => {
         res.json({
             collections: [
-                'permissions_catalog', 'roles', 'users', 'persons',
-                'properties', 'calendar_events', 'visit_requests'
+                'permissions_catalog', 'roles',
+                'users',
+                'persons',
+                'properties',
+                'calendar_events', 'visit_requests', 'visits'
+            ],
+            databases: [
+                'access_control_db',
+                'identity_db',
+                'notification_db',
+                'user_db',
+                'property_db',
+                'visit_calendar_db'
             ]
         });
     });

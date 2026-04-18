@@ -2,16 +2,14 @@ const { MongoClient } = require('mongodb');
 const logger = require('../services/Logger');
 
 class MongoConnection {
-    constructor(uri, dbName) {
-        this.uri = uri || process.env.MONGO_URI || 'mongodb://localhost:27017';
-        this.dbName = dbName || process.env.MONGO_DB_NAME || 'inmobiliaria_db';
+    constructor(uri) {
+        this.uri = uri || process.env.MONGO_URI || 'mongodb://localhost:27017/?authSource=admin';
         this.client = null;
-        this.db = null;
     }
 
     async connect() {
-        if (this.client && this.db) {
-            return this.db;
+        if (this.client) {
+            return this.client;
         }
 
         try {
@@ -22,9 +20,8 @@ class MongoConnection {
             });
             await this.client.connect();
             await this.client.db('admin').command({ ping: 1 });
-            this.db = this.client.db(this.dbName);
-            logger.info(`MongoDB connected — DB: ${this.dbName}`);
-            return this.db;
+            logger.info('MongoDB client connected');
+            return this.client;
         } catch (error) {
             logger.error(`MongoDB connection failed: ${error.message}`);
             throw error;
@@ -35,16 +32,19 @@ class MongoConnection {
         if (this.client) {
             await this.client.close();
             this.client = null;
-            this.db = null;
             logger.info('MongoDB disconnected');
         }
     }
 
-    getDb() {
-        if (!this.db) {
+    /**
+     * Returns a handle to a specific database by name.
+     * @param {string} dbName
+     */
+    getDb(dbName) {
+        if (!this.client) {
             throw new Error('MongoDB not connected. Call connect() first.');
         }
-        return this.db;
+        return this.client.db(dbName);
     }
 
     async isConnected() {

@@ -3,36 +3,61 @@
     "_id": "rol_admin",
     "code": "ADMIN",
     "name": "Administrator",
+    "description": "System Administrator",
     "type": "SYSTEM",
     "active": true,
-    "permissionsRef": "permissions",
+    "permissions": [
+      { "resource": "auth", "action": "login", "scope": "ANY" },
+      { "resource": "users", "action": "create", "scope": "ANY" },
+      { "resource": "users", "action": "read", "scope": "ANY" },
+      { "resource": "users", "action": "update", "scope": "ANY" },
+      { "resource": "users", "action": "delete", "scope": "ANY" },
+      { "resource": "properties", "action": "create", "scope": "ANY" },
+      { "resource": "properties", "action": "read", "scope": "ANY" },
+      { "resource": "properties", "action": "update", "scope": "ANY" },
+      { "resource": "properties", "action": "delete", "scope": "ANY" }
+    ],
     "version": 1
   },
   {
     "_id": "rol_agent",
     "code": "AGENT",
     "name": "Agent",
+    "description": "Real Estate Agent",
     "type": "SYSTEM",
     "active": true,
-    "permissionsRef": "permissions",
+    "permissions": [
+      { "resource": "auth", "action": "login", "scope": "ANY" },
+      { "resource": "users", "action": "read", "scope": "ANY" },
+      { "resource": "users", "action": "create", "scope": "OWN" },
+      { "resource": "properties", "action": "read", "scope": "ANY" },
+      { "resource": "properties", "action": "create", "scope": "ANY" },
+      { "resource": "properties", "action": "update", "scope": "OWN" }
+    ],
     "version": 1
   },
   {
     "_id": "rol_owner",
     "code": "OWNER",
-    "name": "Owner",
+    "name": "Property Owner",
+    "description": "Owner of properties",
     "type": "SYSTEM",
     "active": true,
-    "permissionsRef": [],
+    "permissions": [
+      { "resource": "properties", "action": "read", "scope": "OWN" }
+    ],
     "version": 1
   },
   {
     "_id": "rol_interested_client",
     "code": "INTERESTED_CLIENT",
-    "name": "Client",
+    "name": "Interested Client",
+    "description": "Client looking for properties",
     "type": "SYSTEM",
     "active": true,
-    "permissionsRef": [],
+    "permissions": [
+      { "resource": "properties", "action": "read", "scope": "ANY" }
+    ],
     "version": 1
   }
 ]

@@ -3,13 +3,14 @@
     "_id": "evt_001",
     "propertyId": "prop_venta_001",
     "propertyName": "Casa de Lujo Zona Sur",
+    "propertyAddress": "Av. Principal 123",
     "agentId": "usr_test_agent_1",
     "agentName": "John Doe",
+    "startTime": { "$date": "2026-04-18T10:00:00Z" },
+    "endTime": { "$date": "2026-04-18T11:00:00Z" },
     "type": "VISIT",
     "status": "SCHEDULED",
-    "startOffsetDays": 1,
-    "startHour": 10,
-    "startMinute": 0,
-    "durationHours": 1
+    "notes": "First visit with potential buyer",
+    "createdAt": { "$date": "2026-04-17T10:00:00Z" }
   }
 ]

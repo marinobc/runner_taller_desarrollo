@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "vis_001",
+    "propertyId": "prop_venta_001",
+    "clientId": "usr_test_client_1",
+    "agentId": "usr_test_agent_1",
+    "dateTime": { "$date": "2026-04-18T10:00:00Z" },
+    "status": "CONFIRMADA",
+    "notes": "Confirmada vía telefónica",
+    "createdAt": { "$date": "2026-04-17T10:00:00Z" },
+    "reassignmentHistory": []
+  }
+]

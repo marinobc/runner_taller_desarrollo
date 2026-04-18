@@ -7,9 +7,11 @@
     "agentName": "Jane Smith",
     "clientId": "usr_test_client_1",
     "clientName": "Boo Client",
-    "clientEmail": "client1@user",
-    "preferredOffsetDays": 2,
-    "preferredHour": 10,
-    "preferredMinute": 0
+    "clientEmail": "client1@user.com",
+    "preferredDateTime": { "$date": "2026-04-20T10:00:00Z" },
+    "status": "PENDING",
+    "createdAt": { "$date": "2026-04-17T10:00:00Z" },
+    "updatedAt": { "$date": "2026-04-17T10:00:00Z" },
+    "notificationSent": true
   }
 ]

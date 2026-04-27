@@ -124,8 +124,16 @@ class ProcessManager {
             if (!fs.existsSync(cwd)) { this.broadcastGlobal(`⚠  Path not found: ${cwd}`, "WARN", id); return; }
 
             const mvn = this.getMavenCmd(cwd);
-            args = cleanInstall ? ["clean", "install", "-DskipTests", "spring-boot:run"] : ["spring-boot:run"];
-            
+            const jvmCfg = config.jvm || {};
+
+            // Build spring-boot:run args, optionally injecting fork=false so Maven
+            // reuses its own JVM for the app instead of spawning a second one.
+            const runGoal = "spring-boot:run";
+            const forkArg = jvmCfg.disableFork !== false ? ["-Dspring-boot.run.fork=false"] : [];
+            args = cleanInstall
+                ? ["clean", "install", "-DskipTests", runGoal, ...forkArg]
+                : [runGoal, ...forkArg];
+
             if (this.isWindows()) {
                 if (mvn.endsWith('.cmd')) {
                     // It's the wrapper mvnw.cmd (absolute path). Quote it if it contains spaces.
@@ -163,17 +171,32 @@ class ProcessManager {
                     this.broadcastGlobal(`⚠  npm install failed (code ${code}). Aborting start.`, "WARN", id);
                     return;
                 }
-                this.launch(svc, cmd, args, cwd);
+                this.launch(svc, cmd, args, cwd, config.jvm);
             });
         } else {
-            this.launch(svc, cmd, args, cwd);
+            this.launch(svc, cmd, args, cwd, config.jvm);
         }
     }
 
-    launch(svc, cmd, args, cwd) {
+    launch(svc, cmd, args, cwd, jvmCfg = {}) {
         logger.debug(`Launching process: ${cmd} ${args.join(' ')} (CWD: ${cwd})`);
         try {
-            const proc = spawn(cmd, args, { cwd, shell: this.isWindows(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+            // Build MAVEN_OPTS for maven services so heap and JIT flags apply at the OS level.
+            // When fork=false, Maven IS the app JVM, so MAVEN_OPTS controls the whole process.
+            // TieredStopAtLevel=1 disables the C2 JIT compiler which is the #1 cause of
+            // CPU spikes during Spring Boot startup — trades a bit of peak throughput for
+            // a dramatically smoother startup curve, which is ideal for local dev.
+            let spawnEnv = process.env;
+            if (svc.type === "maven") {
+                const heapMin   = jvmCfg.heapMin   || "64m";
+                const heapMax   = jvmCfg.heapMax   || "512m";
+                const extra     = jvmCfg.extraFlags != null ? jvmCfg.extraFlags : "-XX:TieredStopAtLevel=1";
+                const mavenOpts = `-Xms${heapMin} -Xmx${heapMax}${extra ? ` ${extra}` : ""}`;
+                spawnEnv = { ...process.env, MAVEN_OPTS: mavenOpts };
+                logger.debug(`MAVEN_OPTS for ${svc.id}: ${mavenOpts}`);
+            }
+
+            const proc = spawn(cmd, args, { cwd, shell: this.isWindows(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true, env: spawnEnv });
             
             // Only clear logs if spawn was successful
             this.broadcastServiceClear(svc.id);

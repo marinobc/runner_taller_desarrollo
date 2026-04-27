@@ -13,6 +13,16 @@ class ConfigManager {
             mongoUri: "mongodb://admin:admin@localhost:27017/?authSource=admin",
             seedTestingPassword: "password",
             bcryptRounds: 12,
+            // JVM tuning applied at runner level when launching maven services.
+            // fork=false makes Maven reuse its own JVM for the app (halves JVM count).
+            // TieredStopAtLevel=1 disables the C2 JIT compiler that causes CPU spikes on startup.
+            jvm: {
+                disableFork: true,
+                heapMin: "64m",
+                heapMax: "512m",
+                extraFlags: "-XX:TieredStopAtLevel=1",
+                startAllDelayMs: 5000
+            },
             docker: {
                 services: {}  // { mongodb: { ports: [{host: 27017}], env: [...] }, ... }
             },
@@ -37,6 +47,10 @@ class ConfigManager {
                 return {
                     ...defaults,
                     ...parsed,
+                    jvm: {
+                        ...defaults.jvm,
+                        ...(parsed.jvm || {})
+                    },
                     concat: {
                         ...defaults.concat,
                         ...(parsed.concat || {})

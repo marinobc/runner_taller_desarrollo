@@ -310,15 +310,19 @@ module.exports = function(configManager, processManager, tokenService) {
     router.post("/services/start-all", (req, res) => {
         const cfg = configManager.get();
         const list = ServiceDiscovery.scan(cfg.backendRoot, cfg.frontendRoot);
+        // Use configurable stagger delay. Default 5000ms gives each JVM time to pass
+        // its heaviest startup phase (class loading + JIT) before the next one launches.
+        const staggerMs = cfg.jvm?.startAllDelayMs ?? 5000;
         let delay = 0;
         list.forEach(svc => {
             processManager.ensureService(svc);
             const state = processManager.services.get(svc.id);
             if (!state.running) {
                 setTimeout(() => processManager.start(svc.id, cfg, req.body), delay);
-                delay += 800;
+                delay += staggerMs;
             }
         });
+        processManager.broadcastGlobal(`🚀 Starting ${list.filter(s => !processManager.services.get(s.id)?.running).length} service(s) with ${staggerMs}ms stagger`, "INFO");
         res.json({ ok: true });
     });
 

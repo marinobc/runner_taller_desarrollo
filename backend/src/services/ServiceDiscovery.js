@@ -51,6 +51,21 @@ class ServiceDiscovery {
         const list = [];
         let colorIdx = 0;
 
+        let envPorts = {};
+        if (backendRoot && fs.existsSync(path.join(backendRoot, '.env'))) {
+            try {
+                const envContent = fs.readFileSync(path.join(backendRoot, '.env'), 'utf-8');
+                const envLines = envContent.split('\n');
+                for (let line of envLines) {
+                    line = line.trim();
+                    const match = line.match(/^([^=]+)=(.+)$/);
+                    if (match) {
+                        envPorts[match[1].trim()] = match[2].trim();
+                    }
+                }
+            } catch (e) { console.error("Error reading .env:", e.message); }
+        }
+
         if (backendRoot && fs.existsSync(backendRoot)) {
             try {
                 const entries = fs.readdirSync(backendRoot, { withFileTypes: true });
@@ -66,8 +81,16 @@ class ServiceDiscovery {
                     let type = fs.existsSync(pomPath) ? "maven" : "node";
 
                     if (type === "maven") {
-                        const configPaths = [
-                            path.join(dir, "src/main/resources/application.properties"),
+                        let envKeyName = id.toUpperCase().replace(/-/g, '_') + '_PORT';
+                        if (id === 'service-registry') envKeyName = 'EUREKA_PORT';
+                        
+                        if (envPorts[envKeyName]) {
+                            port = parseInt(envPorts[envKeyName]);
+                        }
+
+                        if (!port) {
+                            const configPaths = [
+                                path.join(dir, "src/main/resources/application.properties"),
                             path.join(dir, "src/main/resources/application.yml"),
                             path.join(dir, "src/main/resources/application.yaml"),
                             path.join(dir, "application.properties"),
@@ -100,6 +123,7 @@ class ServiceDiscovery {
                                     if (ymlMatch) { port = parseInt(ymlMatch[1]); break; }
                                 }
                             }
+                        }
                         }
                     } else {
                         port = this.extractNodePort(dir);

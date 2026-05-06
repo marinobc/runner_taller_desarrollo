@@ -188,10 +188,10 @@ class ProcessManager {
             // a dramatically smoother startup curve, which is ideal for local dev.
             let spawnEnv = process.env;
             if (svc.type === "maven") {
-                const heapMin   = jvmCfg.heapMin   || "64m";
-                const heapMax   = jvmCfg.heapMax   || "512m";
-                const extra     = jvmCfg.extraFlags != null ? jvmCfg.extraFlags : "-XX:TieredStopAtLevel=1";
-                const mavenOpts = `-Xms${heapMin} -Xmx${heapMax}${extra ? ` ${extra}` : ""}`;
+                const heapMin   = jvmCfg.heapMin   || "128m";
+                const heapMax   = jvmCfg.heapMax   || "384m";
+                const extra     = jvmCfg.extraFlags != null ? jvmCfg.extraFlags : "-XX:+UseG1GC -XX:MaxGCPauseMillis=200";
+                const mavenOpts = `-Xms${heapMin} -Xmx${heapMax} ${extra}`;
                 spawnEnv = { ...process.env, MAVEN_OPTS: mavenOpts };
                 logger.debug(`MAVEN_OPTS for ${svc.id}: ${mavenOpts}`);
             }

@@ -31,10 +31,6 @@ const showConflictModal = ref(false)
 watch(() => props.defaultInstall, (val) => { if (val !== undefined) runInstall.value = val }, { immediate: true })
 watch(() => props.defaultClean, (val) => { if (val !== undefined) runClean.value = val }, { immediate: true })
 
-// Sync with global toggles
-watch(() => props.defaultInstall, (val) => { if (val !== undefined) runInstall.value = val }, { immediate: true })
-watch(() => props.defaultClean, (val) => { if (val !== undefined) runClean.value = val }, { immediate: true })
-
 const handleStartClick = async () => {
   if (props.service.conflictingPid) {
     showConflictModal.value = true
@@ -115,8 +111,10 @@ const bgClass = computed(() => props.service.running
           </div>
         </div>
         
-        <div v-if="!service.running && !service.pid" class="text-[10px] text-gray-400 dark:text-gray-500 font-medium italic tracking-wide">
-          Ready to start. Select build options if needed.
+        <div class="space-y-2">
+          <div v-if="!service.running && !service.pid" class="text-[10px] text-gray-400 dark:text-gray-500 font-medium italic tracking-wide">
+            Ready to start. Select build options if needed.
+          </div>
         </div>
       </div>
 

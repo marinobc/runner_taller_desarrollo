@@ -6,6 +6,13 @@
   "mongoUri": "mongodb://admin:admin@localhost:27017/?authSource=admin",
   "seedTestingPassword": "password",
   "bcryptRounds": 12,
+  "jvm": {
+    "disableFork": true,
+    "heapMin": "128m",
+    "heapMax": "384m",
+    "extraFlags": "-XX:+UseG1GC -XX:MaxGCPauseMillis=200",
+    "startAllDelayMs": 15000
+  },
   "docker": {
     "services": {}
   },

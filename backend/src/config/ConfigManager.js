@@ -15,13 +15,13 @@ class ConfigManager {
             bcryptRounds: 12,
             // JVM tuning applied at runner level when launching maven services.
             // fork=false makes Maven reuse its own JVM for the app (halves JVM count).
-            // TieredStopAtLevel=1 disables the C2 JIT compiler that causes CPU spikes on startup.
+            // SerialGC is used for minimal GC overhead in dev with tight heaps.
             jvm: {
                 disableFork: true,
-                heapMin: "64m",
-                heapMax: "512m",
-                extraFlags: "-XX:TieredStopAtLevel=1",
-                startAllDelayMs: 5000
+                heapMin: "96m",
+                heapMax: "192m",
+                extraFlags: "-XX:+UseSerialGC -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=24m -XX:CompressedClassSpaceSize=24m -XX:ThreadStackSize=256 -XX:+UseCompressedOops -XX:+UseCompressedClassPointers",
+                startAllDelayMs: 15000
             },
             docker: {
                 services: {}  // { mongodb: { ports: [{host: 27017}], env: [...] }, ... }

@@ -8,9 +8,9 @@
   "bcryptRounds": 12,
   "jvm": {
     "disableFork": true,
-    "heapMin": "128m",
-    "heapMax": "384m",
-    "extraFlags": "-XX:+UseG1GC -XX:MaxGCPauseMillis=200",
+    "heapMin": "96m",
+    "heapMax": "192m",
+    "extraFlags": "-XX:+UseSerialGC -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=24m -XX:CompressedClassSpaceSize=24m -XX:ThreadStackSize=256 -XX:+UseCompressedOops -XX:+UseCompressedClassPointers",
     "startAllDelayMs": 15000
   },
   "docker": {

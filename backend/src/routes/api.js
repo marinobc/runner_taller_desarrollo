@@ -318,7 +318,8 @@ module.exports = function(configManager, processManager, tokenService) {
             processManager.ensureService(svc);
             const state = processManager.services.get(svc.id);
             if (!state.running) {
-                setTimeout(() => processManager.start(svc.id, cfg, req.body), delay);
+                // Don't pass cleanInstall flag — let ProcessManager auto-detect based on file existence
+                setTimeout(() => processManager.start(svc.id, cfg, {}), delay);
                 delay += staggerMs;
             }
         });

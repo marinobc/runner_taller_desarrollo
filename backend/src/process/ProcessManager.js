@@ -104,7 +104,13 @@ class ProcessManager {
     async start(id, config, opts = {}) {
         logger.debug(`Attempting to start service: ${id}`, opts);
         const svc = this.services.get(id);
-        if (!svc || svc.running) return;
+        if (!svc) return;
+        
+        if (svc.running) {
+            logger.debug(`Service ${id} is already running (PID: ${svc.pid}), skipping start`);
+            this.broadcastGlobal(`ℹ  ${svc.label} already running (PID ${svc.pid})`, "INFO", id);
+            return;
+        }
 
         // Pre-flight check: Port conflict
         if (svc.port) {
@@ -126,22 +132,37 @@ class ProcessManager {
             const mvn = this.getMavenCmd(cwd);
             const jvmCfg = config.jvm || {};
 
-            // Build spring-boot:run args, optionally injecting fork=false so Maven
-            // reuses its own JVM for the app instead of spawning a second one.
+            // Always use spring-boot:run with fork=false (reuses Maven's JVM).
+            // Skip 'clean install' by default — builds should be done separately.
+            // Only build if explicitly requested AND no compiled classes exist yet.
             const runGoal = "spring-boot:run";
-            const forkArg = jvmCfg.disableFork !== false ? ["-Dspring-boot.run.fork=false"] : [];
-            args = cleanInstall
+            const forkArg = jvmCfg.disableFork === false ? [] : ["-Dspring-boot.run.fork=false"];
+            
+            // Check if we need to build (classes don't exist yet)
+            const classesDir = path.join(cwd, "target", "classes");
+            const shouldBuild = cleanInstall || !fs.existsSync(classesDir);
+            
+            args = shouldBuild
                 ? ["clean", "install", "-DskipTests", runGoal, ...forkArg]
                 : [runGoal, ...forkArg];
+            
+            if (forkArg.length > 0) {
+                logger.debug(`Fork disabled for ${svc.id}: Will reuse Maven JVM (single process, ~300MB instead of ~600MB)`);
+            }
+            if (!shouldBuild) {
+                logger.debug(`Skipping clean/install for ${svc.id} — using cached build. Pass cleanInstall=true to rebuild.`);
+            }
 
             if (this.isWindows()) {
                 if (mvn.endsWith('.cmd')) {
-                    // It's the wrapper mvnw.cmd (absolute path). Quote it if it contains spaces.
+                    // On Windows, keep command and args separate for spawn to handle correctly
+                    // shell:true will construct the full command line properly
                     cmd = mvn.includes(' ') ? `"${mvn}"` : mvn;
+                    // args stays as-is: ["spring-boot:run", "-Dspring-boot.run.fork=false", ...]
                 } else {
-                    // It's the global "mvn" command
+                    // It's the global "mvn" command - use cmd /c wrapper
                     cmd = "cmd";
-                    args = ["/c", mvn, ...args];
+                    args = ["/c", `mvn ${args.join(' ')}`];
                 }
             } else {
                 cmd = mvn;
@@ -179,21 +200,24 @@ class ProcessManager {
     }
 
     launch(svc, cmd, args, cwd, jvmCfg = {}) {
-        logger.debug(`Launching process: ${cmd} ${args.join(' ')} (CWD: ${cwd})`);
+        const fullCmd = `${cmd} ${args.join(' ')}`;
+        logger.debug(`Launching process: ${fullCmd} (CWD: ${cwd})`);
+        this.broadcastGlobal(`⚡ Executing: ${fullCmd}`, "DEBUG", svc.id);
+        
         try {
             // Build MAVEN_OPTS for maven services so heap and JIT flags apply at the OS level.
             // When fork=false, Maven IS the app JVM, so MAVEN_OPTS controls the whole process.
-            // TieredStopAtLevel=1 disables the C2 JIT compiler which is the #1 cause of
-            // CPU spikes during Spring Boot startup — trades a bit of peak throughput for
-            // a dramatically smoother startup curve, which is ideal for local dev.
             let spawnEnv = process.env;
             if (svc.type === "maven") {
-                const heapMin   = jvmCfg.heapMin   || "128m";
-                const heapMax   = jvmCfg.heapMax   || "384m";
-                const extra     = jvmCfg.extraFlags != null ? jvmCfg.extraFlags : "-XX:+UseG1GC -XX:MaxGCPauseMillis=200";
+                const heapMin   = jvmCfg.heapMin   || "96m";
+                const heapMax   = jvmCfg.heapMax   || "192m";
+                const extra     = jvmCfg.extraFlags != null ? jvmCfg.extraFlags : "-XX:+UseSerialGC -XX:MaxMetaspaceSize=96m -XX:+UseCompressedOops -XX:+UseCompressedClassPointers";
                 const mavenOpts = `-Xms${heapMin} -Xmx${heapMax} ${extra}`;
                 spawnEnv = { ...process.env, MAVEN_OPTS: mavenOpts };
+                const forkDisabled = args.some(arg => arg === "-Dspring-boot.run.fork=false");
                 logger.debug(`MAVEN_OPTS for ${svc.id}: ${mavenOpts}`);
+                logger.debug(`Fork disabled: ${forkDisabled}`);
+                this.broadcastGlobal(`Fork=false flag present: ${forkDisabled ? '✓' : '✗'}`, "DEBUG", svc.id);
             }
 
             const proc = spawn(cmd, args, { cwd, shell: this.isWindows(), stdio: ["ignore", "pipe", "pipe"], windowsHide: true, env: spawnEnv });
